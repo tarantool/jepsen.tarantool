@@ -1,0 +1,16 @@
+version: '2'
+
+services:
+  tarantool1:
+    image: tarantool/tarantool:2.6.0
+    command: tarantool /opt/resources/tarantool/single.lua
+    volumes:
+      - ./resources/:/opt/resources
+    networks:
+      - net
+    ports:
+      - "3301:3301"
+
+networks:
+  net:
+    driver: bridge

@@ -1,0 +1,106 @@
+single_mode = %TARANTOOL_SINGLE_MODE%
+
+if single_mode then
+box.cfg {
+    listen = 3301;
+    log_level = 6;
+    log_nonblock = false;
+    too_long_threshold = 0.5;
+    custom_proc_title = 'jepsen';
+    memtx_memory = 1024*1024*1024;
+}
+else
+box.cfg {
+    listen = 3301;
+    replication = { %TARANTOOL_REPLICATION% };
+    read_only = %TARANTOOL_IS_READ_ONLY%;
+    replication_synchro_quorum = 2;
+    replication_synchro_timeout = 0.2;
+    log_level = 6;
+    log_nonblock = false;
+    too_long_threshold = 0.5;
+    custom_proc_title = 'jepsen';
+    memtx_memory = 1024*1024*1024,
+}
+end
+
+local function bootstrap()
+    box.schema.user.create('jepsen', {password = 'jepsen'})
+    box.schema.user.grant('jepsen', 'create,read,write,execute,drop,alter,replication', 'universe')
+    box.schema.user.grant('jepsen', 'read,write', 'space', '_index')
+    box.schema.user.grant('jepsen', 'write', 'space', '_schema')
+    box.schema.user.grant('jepsen', 'write', 'space', '_space')
+
+    box.schema.space.create('JEPSEN', {engine = '%TARANTOOL_DATA_ENGINE%'})
+    box.space['JEPSEN']:create_index('primary', {parts = {1, 'unsigned' }})
+
+--[[ Function implements a CAS (Compare And Set) operation, which takes a key,
+old value, and new value and sets the key to the new value if and only if the
+old value matches what's currently there, and returns a detailed response
+map. If the CaS fails, it returns false.
+Example: SELECT _CAS(1, 3, 4, 'JEPSEN')
+]]
+box.schema.func.create('_CAS',
+   {language = 'LUA',
+    returns = 'boolean',
+    body = [[function(id, old_value, new_value, table)
+    local rc = false
+    box.begin()
+    tuple = box.space[table]:get{id}
+    if tuple then
+        if tuple[2] == old_value then
+            box.space[table]:update({id}, {{'=', 2, new_value}})
+            rc = true
+        end
+    end
+    box.commit()
+
+    return rc
+end]],
+    is_sandboxed = false,
+    param_list = {'integer', 'integer', 'integer', 'string'},
+    exports = {'LUA', 'SQL'},
+    is_deterministic = true})
+
+--[[ Function implements an WRITE operation, which takes a key and value
+and sets the key to the value if and only if the key is already exists, and
+insert value if it is absent.
+Example: SELECT _WRITE(1, 3, 'JEPSEN')
+]]
+box.schema.func.create('_WRITE',
+   {language = 'LUA',
+    returns = 'integer',
+    body = [[function (id, value, table)
+             box.space[table]:upsert({id, value}, {{'=', 1, 1}, {'=', 2, value}})
+             return value
+             end]],
+    is_sandboxed = false,
+    param_list = {'integer', 'integer', 'string'},
+    exports = {'LUA', 'SQL'},
+    is_deterministic = true})
+
+--[[ Function implements an READ operation, which takes a key and returns a
+value.
+Example: SELECT _READ(1, 'JEPSEN')
+]]
+box.schema.func.create('_READ',
+   {language = 'LUA',
+    returns = 'integer',
+    body = [[function (id, table)
+             box.begin()
+             tuple = box.space[table]:get{id}
+             if tuple then
+                 return tuple[2]
+             end
+             box.commit()
+             return nil
+             end]],
+    is_sandboxed = false,
+    param_list = {'integer', "string"},
+    exports = {'LUA', 'SQL'},
+    is_deterministic = true})
+end
+
+box.once('jepsen', bootstrap)
+
+require('console').start()
