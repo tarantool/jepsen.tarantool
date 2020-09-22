@@ -46,7 +46,7 @@ box.schema.func.create('_CAS',
     body = [[function(id, old_value, new_value, table)
     local rc = false
     box.begin()
-    tuple = box.space[table]:get{id}
+    local tuple = box.space[table]:get{id}
     if tuple then
         if tuple[2] == old_value then
             box.space[table]:update({id}, {{'=', 2, new_value}})
@@ -88,7 +88,7 @@ box.schema.func.create('_READ',
     returns = 'integer',
     body = [[function (id, table)
              box.begin()
-             tuple = box.space[table]:get{id}
+             local tuple = box.space[table]:get{id}
              if tuple then
                  return tuple[2]
              end
