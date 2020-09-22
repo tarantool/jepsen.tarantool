@@ -37,9 +37,12 @@ To get started, try
 lein run test --nodes-file nodes
 ```
 
-To test a particular major version of Tarantool, pass `--version`. You may also want
-to provide a custom `--time-limit` for each test. To run several iterations of
-each test, use `--test-count`. A thorough test run might look like:
+To test a particular version of Tarantool, pass `--version`. It accepts two
+kind of versions: branch version (for example 2.2) to use a latest version
+of package from this branch and GIT commit hash to use version built on this
+commit. You may also want to provide a custom `--time-limit` for each test. To
+run several iterations of each test, use `--test-count`. A thorough test run
+might look like:
 
 ```
 lein run test --username root --nodes-file nodes --version 2.5 --time-limit 600 --test-count 10
