@@ -2,10 +2,6 @@
   "Run Tarantool tests."
   (:require [clojure.tools.logging :refer [info warn]]
             [clojure.string :as str]
-            [clojure.java.io :as io]
-            [next.jdbc :as j]
-            [next.jdbc.connection :as connection]
-            [slingshot.slingshot :refer [try+]]
             [jepsen [cli :as cli]
                     [client :as client]
                     [checker :as checker]
@@ -19,54 +15,23 @@
             [knossos.model :as model]
             [jepsen.checker.timeline :as timeline]
             [jepsen.os.ubuntu :as ubuntu]
+            [tarantool.client :as cl]
             [tarantool.db :as db]))
 
 (defn r   [_ _] {:type :invoke, :f :read, :value nil})
 (defn w   [_ _] {:type :invoke, :f :write, :value (rand-int 5)})
 (defn cas [_ _] {:type :invoke, :f :cas, :value [(rand-int 5) (rand-int 5)]})
 
-(defn conn-spec
-   "JDBC connection spec for a node."
-   [node]
-   {:classname "org.tarantool.jdbc.SQLDriver"
-    :dbtype "tarantool"
-    :dbname "jepsen"
-    :host (name node)
-    :port 3301
-    :user "jepsen"
-    :password "jepsen"})
-
-(defn open
-  "Opens a connection to the given node."
-  [node test]
-  (j/get-datasource (conn-spec node)))
-
-(defn read-v-by-k
-  "Reads the current value of a key."
-  [conn k]
-  (first (vals (first (j/execute! conn ["SELECT _READ(?, 'JEPSEN')" k])))))
-
-(defn write-v-by-k
-  "Writes the current value of a key."
-  [conn k v]
-  (j/execute! conn ["SELECT _WRITE(?, ?, 'JEPSEN')"
-                    k v]))
-
-(defn compare-and-set
-  [conn id old new]
-  (first (vals (first (j/execute! conn ["SELECT _CAS(?, ?, ?, 'JEPSEN')"
-                                        id old new])))))
-
 (defrecord Client [conn]
   client/Client
 
   (open! [this test node]
-    (let [conn (open node test)]
+    (let [conn (cl/open node test)]
       (assert conn)
       (assoc this :conn conn :node node)))
 
   (setup! [this test node]
-    (let [conn (open node test)]
+    (let [conn (cl/open node test)]
       (assert conn)
       ;(when (= node (jepsen/primary test))
       ;  (j/execute! conn ["CREATE TABLE IF NOT EXISTS jepsen (key INT, value INT, PRIMARY KEY (key))"])
@@ -77,13 +42,13 @@
      (case (:f op)
        :read (assoc op
                     :type  :ok
-                    :value (read-v-by-k conn 1))
-       :write (do (let [con (open (jepsen/primary test) test)]
-                   (write-v-by-k con 1 (:value op)))
+                    :value (cl/read-v-by-k conn 1))
+       :write (do (let [con (cl/open (jepsen/primary test) test)]
+                   (cl/write-v-by-k con 1 (:value op)))
                    (assoc op :type :ok))
        :cas (let [[old new] (:value op)
-                  con (open (jepsen/primary test) test)]
-                  (assoc op :type (if (compare-and-set con 1 old new)
+                  con (cl/open (jepsen/primary test) test)]
+                  (assoc op :type (if (cl/compare-and-set con 1 old new)
                                    :ok
                                    :fail)))))
 
