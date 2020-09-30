@@ -19,12 +19,23 @@
             ;[knossos.model :as model]
             [jepsen.os.ubuntu :as ubuntu]
             [tarantool [db :as db]
-                       [register :as register]]))
+                       [register :as register]
+                       [sets :as sets]]))
 
 (def workloads
   "A map of workload names to functions that can take opts and construct
-  workloads."
-  {;:set             set/workload
+  workloads.
+  Each workload is a map like
+
+      {:generator         a generator of client ops
+       :final-generator   a generator to run after the cluster recovers
+       :client            a client to execute those ops
+       :checker           a checker
+       :model             for the checker}
+
+  Or, for some special cases where nemeses and workloads are coupled, we return
+  a keyword here instead."
+  {:set             sets/workload
    ;:bank            bank/workload
    ;:bank-index      bank/index-workload
    ;:g2              g2/workload
@@ -104,7 +115,14 @@
         nemesis  nemesis/noop
         gen      (->> (:generator workload)
                       (gen/nemesis (:generator nemesis))
-                      (gen/time-limit (:time-limit opts)))]
+                      (gen/time-limit (:time-limit opts)))
+        gen      (if (:final-generator workload)
+                   (gen/phases gen
+                               (gen/log "Healing cluster")
+                               (gen/nemesis (:final-generator nemesis))
+                               (gen/log "Waiting for recovery...")
+                               (gen/clients (:final-generator workload)))
+                   gen)]
     (merge tests/noop-test
            opts
            {:client    (:client workload)
