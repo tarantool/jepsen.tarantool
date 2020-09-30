@@ -1,0 +1,77 @@
+(ns tarantool.sets
+  "Set (test inserts a series of unique numbers as separate instances, one per
+   transaction, and attempts to read them back through an index), serializability."
+
+  (:require [jepsen [client :as client]
+                    [checker :as checker]
+                    [generator :as gen]
+                    [independent :as independent]]
+            [next.jdbc :as j]
+            [next.jdbc.sql :as sql]
+            [tarantool.client :as cl]
+            [jepsen.core :as jepsen]
+            [knossos.model :as model]
+            [knossos.op :as op]))
+
+(def table-name "sets")
+
+(defrecord SetClient [conn]
+  client/Client
+
+  (open! [this test node]
+    (let [conn (cl/open node test)]
+      (assert conn)
+      (assoc this :conn conn :node node)))
+
+  (setup! [this test node]
+    (let [conn (cl/open node test)]
+    (assert conn)
+    (cl/with-conn-failure-retry conn
+      (j/execute! conn [(str "CREATE TABLE IF NOT EXISTS " table-name
+                        " (id INT NOT NULL PRIMARY KEY AUTOINCREMENT,
+                        value INT NOT NULL)")]))
+      (assoc this :conn conn :node node)))
+
+  (invoke! [this test op]
+    (let [[k v] (:value op)]
+    (cl/with-error-handling op
+      (cl/with-txn-aborts op
+        (case (:f op)
+          :add  (do (sql/insert! conn table-name {:value v})
+                    (assoc op :type :ok))
+
+          :read (->> (sql/query conn [(str "SELECT * FROM " table-name)])
+                     (mapv :VALUE)
+                     (assoc op :type :ok, :value)))))))
+
+  (teardown! [_ test]
+    (cl/with-conn-failure-retry conn
+      (j/execute! conn [(str "DROP TABLE IF EXISTS " table-name)])))
+
+  (close! [_ test]))
+
+(defn workload
+  [opts]
+  (let [max-key (atom 0) c (:concurrency opts)]
+    {:client  (SetClient. nil)
+     :checker (independent/checker (checker/set-full {:linearizable? true}))
+     :generator (independent/concurrent-generator
+                  c
+                  (range)
+                  (fn [k]
+                    (swap! max-key max k)
+                    (->> (range 10000)
+                         (map (fn [x] {:type :invoke, :f :add, :value x}))
+                         gen/seq
+                         (gen/stagger 1/10))))
+     :final-generator (gen/derefer
+                        (delay
+                          (locking keys
+                            (independent/concurrent-generator
+                              c
+                              (range (inc @max-key))
+                              (fn [k]
+                                (gen/stagger 10
+                                   (gen/each
+                                     (gen/once {:type :invoke
+                                                :f    :read}))))))))}))
