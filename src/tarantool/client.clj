@@ -27,22 +27,6 @@
   [node test]
   (j/get-datasource (conn-spec node)))
 
-(defn read-v-by-k
-  "Reads the current value of a key."
-  [conn k]
-  (first (vals (first (j/execute! conn ["SELECT _READ(?, 'JEPSEN')" k])))))
-
-(defn write-v-by-k
-  "Writes the current value of a key."
-  [conn k v]
-  (j/execute! conn ["SELECT _WRITE(?, ?, 'JEPSEN')"
-                    k v]))
-
-(defn compare-and-set
-  [conn id old new]
-  (first (vals (first (j/execute! conn ["SELECT _CAS(?, ?, ?, 'JEPSEN')"
-                                        id old new])))))
-
 (defmacro with-error-handling
   "Common error handling for errors, including txn aborts."
   [op & body]
