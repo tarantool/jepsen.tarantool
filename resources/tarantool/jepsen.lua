@@ -31,9 +31,6 @@ local function bootstrap()
     box.schema.user.grant('jepsen', 'write', 'space', '_schema')
     box.schema.user.grant('jepsen', 'write', 'space', '_space')
 
-    box.schema.space.create('JEPSEN', {engine = '%TARANTOOL_DATA_ENGINE%'})
-    box.space['JEPSEN']:create_index('primary', {parts = {1, 'unsigned' }})
-
 --[[ Function implements a CAS (Compare And Set) operation, which takes a key,
 old value, and new value and sets the key to the new value if and only if the
 old value matches what's currently there, and returns a detailed response
@@ -44,59 +41,37 @@ box.schema.func.create('_CAS',
    {language = 'LUA',
     returns = 'boolean',
     body = [[function(id, old_value, new_value, table)
-    local rc = false
-    box.begin()
-    local tuple = box.space[table]:get{id}
-    if tuple then
-        if tuple[2] == old_value then
-            box.space[table]:update({id}, {{'=', 2, new_value}})
-            rc = true
-        end
-    end
-    box.commit()
+             local rc = false
+             box.begin()
+             local tuple = box.space[table]:get{id}
+             if tuple then
+                 if tuple[2] == old_value then
+                     box.space[table]:update({id}, {{'=', 2, new_value}})
+                     rc = true
+                 end
+             end
+             box.commit()
 
-    return rc
-end]],
+             return rc
+             end]],
     is_sandboxed = false,
     param_list = {'integer', 'integer', 'integer', 'string'},
     exports = {'LUA', 'SQL'},
     is_deterministic = true})
 
---[[ Function implements an WRITE operation, which takes a key and value
-and sets the key to the value if and only if the key is already exists, and
-insert value if it is absent.
-Example: SELECT _WRITE(1, 3, 'JEPSEN')
+--[[ Function implements a UPSERT operation, which takes a key and value
+and sets the key to the value if key exists or insert new key with that value.
+Example: SELECT _UPSERT(1, 3, 4, 'JEPSEN')
 ]]
-box.schema.func.create('_WRITE',
+box.schema.func.create('_UPSERT',
    {language = 'LUA',
-    returns = 'integer',
-    body = [[function (id, value, table)
-             box.space[table]:upsert({id, value}, {{'=', 1, 1}, {'=', 2, value}})
-             return value
+    returns = 'boolean',
+    body = [[function(id, value, table)
+             box.space[table]:upsert({id, value}, {{'=', 2, value}})
+             return true
              end]],
     is_sandboxed = false,
     param_list = {'integer', 'integer', 'string'},
-    exports = {'LUA', 'SQL'},
-    is_deterministic = true})
-
---[[ Function implements an READ operation, which takes a key and returns a
-value.
-Example: SELECT _READ(1, 'JEPSEN')
-]]
-box.schema.func.create('_READ',
-   {language = 'LUA',
-    returns = 'integer',
-    body = [[function (id, table)
-             box.begin()
-             local tuple = box.space[table]:get{id}
-             if tuple then
-                 return tuple[2]
-             end
-             box.commit()
-             return nil
-             end]],
-    is_sandboxed = false,
-    param_list = {'integer', "string"},
     exports = {'LUA', 'SQL'},
     is_deterministic = true})
 end

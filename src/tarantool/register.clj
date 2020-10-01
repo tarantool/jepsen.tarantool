@@ -12,11 +12,15 @@
                     [nemesis :as nemesis]
                     [tests :as tests]
                     [util :refer [timeout meh]]]
+            [next.jdbc :as j]
+            [next.jdbc.sql :as sql]
             [knossos.model :as model]
             [jepsen.checker.timeline :as timeline]
             [jepsen.os.ubuntu :as ubuntu]
             [tarantool.client :as cl]
             [tarantool.db :as db]))
+
+(def table-name "register")
 
 (defn r   [_ _] {:type :invoke, :f :read, :value nil})
 (defn w   [_ _] {:type :invoke, :f :write, :value (rand-int 5)})
@@ -33,27 +37,39 @@
   (setup! [this test node]
     (let [conn (cl/open node test)]
       (assert conn)
-      ;(when (= node (jepsen/primary test))
-      ;  (j/execute! conn ["CREATE TABLE IF NOT EXISTS jepsen (key INT, value INT, PRIMARY KEY (key))"])
-      ;  (j/execute! conn ["CREATE INDEX IF NOT EXISTS idx ON jepsen (key)"]))
+      (cl/with-conn-failure-retry conn
+        (j/execute! conn [(str "CREATE TABLE IF NOT EXISTS " table-name
+                          " (id INT NOT NULL PRIMARY KEY,
+                          value INT NOT NULL)")]))
       (assoc this :conn conn :node node)))
 
   (invoke! [this test op]
      (case (:f op)
-       :read (assoc op
-                    :type  :ok
-                    :value (cl/read-v-by-k conn 1))
-       :write (do (let [con (cl/open (jepsen/primary test) test)]
-                   (cl/write-v-by-k con 1 (:value op)))
-                   (assoc op :type :ok))
+       :read (let [value (:VALUE
+               (first (sql/query conn
+                 [(str "SELECT value FROM " table-name " WHERE id = 1")])))]
+             (assoc op :type :ok :value value))
+
+       :write (do (let [con (cl/open (jepsen/primary test) test)
+                        table (clojure.string/upper-case table-name)]
+                    (j/execute! con
+                      [(str "SELECT _UPSERT(1, " (:value op) ", '" table "')")])
+                  (assoc op :type :ok)))
+
        :cas (let [[old new] (:value op)
-                  con (cl/open (jepsen/primary test) test)]
-                  (assoc op :type (if (cl/compare-and-set con 1 old new)
+                  con (cl/open (jepsen/primary test) test)
+                  table (clojure.string/upper-case table-name)]
+                  (assoc op :type (if (->> (j/execute! conn
+                                             [(str "SELECT _CAS(1, " old ", " new ", '" table "')")])
+                                           (first)
+                                           (vals)
+                                           (first))
                                    :ok
                                    :fail)))))
 
-  (teardown! [this test])
-      ;(j/execute! conn ["DROP TABLE jepsen"]))
+  (teardown! [_ test]
+    (cl/with-conn-failure-retry conn
+      (j/execute! conn [(str "DROP TABLE IF EXISTS " table-name)])))
 
   (close! [_ test]))
 
