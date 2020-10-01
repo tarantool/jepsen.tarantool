@@ -19,12 +19,10 @@ addons:
       - gnuplot-x11
 
 before_install:
-  - cd ${TRAVIS_BUILD_DIR}/jepsen
+  - cd ${TRAVIS_BUILD_DIR}
 
 before_script:
   - docker-compose up -d
 
 script:
-  - lein cljfmt check
-  - lein clean
-  - lein test
+  - lein deps
