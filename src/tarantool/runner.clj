@@ -20,7 +20,8 @@
             [jepsen.os.ubuntu :as ubuntu]
             [tarantool [db :as db]
                        [register :as register]
-                       [sets :as sets]]))
+                       [sets :as sets]
+                       [counter :as counter]]))
 
 (def workloads
   "A map of workload names to functions that can take opts and construct
@@ -36,6 +37,8 @@
   Or, for some special cases where nemeses and workloads are coupled, we return
   a keyword here instead."
   {:set             sets/workload
+   :counter-inc     counter/workload-inc
+   :counter-dec     counter/workload-dec
    ;:bank            bank/workload
    ;:bank-index      bank/index-workload
    ;:g2              g2/workload
