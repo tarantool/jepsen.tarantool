@@ -73,9 +73,6 @@
      :parse-fn keyword
      :missing (str "--workload " (cli/one-of workloads))
      :validate [workloads (cli/one-of workloads)]]
-    [nil "--single-mode"
-     "Use a single Tarantool instance"
-     :default false]
     ["-e" "--engine NAME"
      "What Tarantool data engine should we use?"
      :default "memtx"]])
@@ -134,7 +131,6 @@
             :os        ubuntu/os
             :db        (db/db (:version opts))
             :engine    (:engine opts)
-            :single-mode (:single-mode opts)
             :pure-generators true
             :generator gen
             :checker   (checker/compose {:perf        (checker/perf)

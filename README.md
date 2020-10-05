@@ -46,7 +46,7 @@ might look like:
 
 ```
 lein run test --username root --nodes-file nodes --version 2.5 --time-limit 600 --test-count 10
-lein run test --nodes-file node --single-mode --engine vinyl --concurrency 20 --time-limit 100
+lein run test --nodes-file node --engine vinyl --concurrency 20 --time-limit 100
 ```
 
 To focus on a particular set of faults, use `--nemesis`
