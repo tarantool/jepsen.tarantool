@@ -196,6 +196,13 @@
   (let [p (jepsen/primary test)]
     (if (= node p) true false)))
 
+(defn is-single-mode?
+  [test]
+  (let [n (count (:nodes test))]
+    (cond
+      (= n 1) true
+      :else false)))
+
 (defn configure!
   "Configure instance"
   [test node]
@@ -207,7 +214,7 @@
     (c/exec :echo (-> "tarantool/jepsen.lua" io/resource slurp
                       (str/replace #"%TARANTOOL_REPLICATION%" (replica-set test))
                       (str/replace #"%TARANTOOL_IS_READ_ONLY%" (boolean-to-str read-only))
-                      (str/replace #"%TARANTOOL_SINGLE_MODE%" (boolean-to-str (:single-mode test)))
+                      (str/replace #"%TARANTOOL_SINGLE_MODE%" (boolean-to-str (is-single-mode? test)))
                       (str/replace #"%TARANTOOL_DATA_ENGINE%" (:engine test)))
             :> "/etc/tarantool/instances.enabled/jepsen.lua")
     (c/exec :cp "/etc/tarantool/instances.enabled/jepsen.lua" "/etc/tarantool/instances.available")))
