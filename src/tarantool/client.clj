@@ -6,7 +6,7 @@
             [dom-top.core :as dt]
             [next.jdbc.connection :as connection]))
 
-(def max-timeout "Longest timeout, in ms" 300000)
+(def max-timeout "Longest timeout, in ms" 10000000)
 
 (defn conn-spec
    "JDBC connection spec for a node."
