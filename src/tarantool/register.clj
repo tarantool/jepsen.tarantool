@@ -44,28 +44,34 @@
       (assoc this :conn conn :node node)))
 
   (invoke! [this test op]
+   (let [[k value] (:value op)]
      (case (:f op)
-       :read (let [value (:VALUE
-               (first (sql/query conn
-                 [(str "SELECT value FROM " table-name " WHERE id = 1")])))]
-             (assoc op :type :ok :value value))
+
+       :read (let [r (first (sql/query conn [(str "SELECT value FROM " table-name " WHERE id = " k)]))
+                   v (:value r)]
+               (assoc op :type :ok, :value (independent/tuple k v)))
 
        :write (do (let [con (cl/open (jepsen/primary test) test)
                         table (clojure.string/upper-case table-name)]
                     (j/execute! con
-                      [(str "SELECT _UPSERT(1, " (:value op) ", '" table "')")])
-                  (assoc op :type :ok)))
+                      [(str "SELECT _UPSERT(" k ", " value ", '" table "')")])
+                    (assoc op
+                           :type :ok
+                           :value (independent/tuple k value))))
 
-       :cas (let [[old new] (:value op)
+       :cas (do (let [[old new] value
                   con (cl/open (jepsen/primary test) test)
-                  table (clojure.string/upper-case table-name)]
-                  (assoc op :type (if (->> (j/execute! conn
-                                             [(str "SELECT _CAS(1, " old ", " new ", '" table "')")])
-                                           (first)
-                                           (vals)
-                                           (first))
-                                   :ok
-                                   :fail)))))
+                  table (clojure.string/upper-case table-name)
+                  r (->> (j/execute! con
+                           [(str "SELECT _CAS(" k ", " old ", " new ", '" table "')")])
+                         (first)
+                         (vals)
+                         (first))]
+                  (if r
+                    (assoc op
+                           :type  :ok
+                           :value (independent/tuple k value))
+                    (assoc op :type :fail)))))))
 
   (teardown! [_ test]
     (cl/with-conn-failure-retry conn
@@ -76,11 +82,15 @@
 (defn workload
   [opts]
   {:client      (Client. nil)
-   :generator   (->> (gen/mix [r w cas])
-                     (gen/stagger 1/10)
-                     (gen/nemesis nil)
-                     (gen/time-limit (:time-limit opts)))
-   :checker     (checker/compose
-                   {:timeline     (timeline/html)
-                    :linearizable (checker/linearizable {:model (model/cas-register 0)
-                                                         :algorithm :linear})})})
+   :generator   (independent/concurrent-generator
+                  10
+                  (range)
+                  (fn [k]
+                    (->> (gen/mix [w cas])
+                         (gen/reserve 5 r)
+                         (gen/limit 100))))
+   :checker     (independent/checker
+                  (checker/compose
+                    {:timeline     (timeline/html)
+                     :linearizable (checker/linearizable {:model (model/cas-register 0)
+                                                          :algorithm :linear})}))})
