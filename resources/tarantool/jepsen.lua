@@ -16,6 +16,10 @@ box.cfg {
     read_only = %TARANTOOL_IS_READ_ONLY%;
     replication_synchro_quorum = 2;
     replication_synchro_timeout = 0.2;
+    replication_timeout = 2;
+    election_is_enabled = true;
+    election_is_candidate = true;
+    election_timeout = 0.3;
     log_level = 6;
     log_nonblock = false;
     too_long_threshold = 0.5;
