@@ -13,7 +13,7 @@ else
 box.cfg {
     listen = 3301;
     replication = { %TARANTOOL_REPLICATION% };
-    read_only = %TARANTOOL_IS_READ_ONLY%;
+    --read_only = %TARANTOOL_IS_READ_ONLY%;
     replication_synchro_quorum = 2;
     replication_synchro_timeout = 0.2;
     log_level = 6;

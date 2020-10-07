@@ -22,6 +22,25 @@
     :connectTimeout (/ max-timeout 1000)
     :socketTimeout (/ max-timeout 1000)})
 
+;(defn is-read-only
+;  [conn]
+;  (j/execute! conn ["SELECT lua('return box.info().ro') IS NOT NULL"]))
+
+;(defn set-read-only-mode
+;  "Disable and enable read only mode"
+;  [conn mode]
+;  (j/execute! conn ["SELECT LUA('box.cfg{read_only=true}; return true')"]))
+
+(defn is-primary?
+  [test node]
+  (let [conn (cl/open node test)]
+    (if (= node p) true false)))
+  j/query conn ["box.info.election.state"]
+
+(defn primary
+  [nodes]
+  (doseq [n nodes] (println n))
+
 (defn open
   "Opens a connection to the given node."
   [node test]
