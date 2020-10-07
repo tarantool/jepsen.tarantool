@@ -69,6 +69,9 @@
    [["-v" "--version VERSION"
      "What Tarantool version should we test?"
      :default "2.6"]
+    [nil "--mvcc"
+     "Enable MVCC engine"
+     :default false]
     ["-w" "--workload NAME" "Test workload to run"
      :parse-fn keyword
      :missing (str "--workload " (cli/one-of workloads))
@@ -131,6 +134,7 @@
             :os        ubuntu/os
             :db        (db/db (:version opts))
             :engine    (:engine opts)
+            :mvcc      (:mvcc opts)
             :pure-generators true
             :generator gen
             :checker   (checker/compose {:perf        (checker/perf)
