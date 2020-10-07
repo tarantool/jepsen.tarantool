@@ -8,6 +8,7 @@ box.cfg {
     too_long_threshold = 0.5;
     custom_proc_title = 'jepsen';
     memtx_memory = 1024*1024*1024;
+    memtx_use_mvcc_engine = %TARANTOOL_MVCC%;
 }
 else
 box.cfg {
@@ -20,7 +21,8 @@ box.cfg {
     log_nonblock = false;
     too_long_threshold = 0.5;
     custom_proc_title = 'jepsen';
-    memtx_memory = 1024*1024*1024,
+    memtx_memory = 1024*1024*1024;
+    memtx_use_mvcc_engine = %TARANTOOL_MVCC%;
 }
 end
 

@@ -214,6 +214,7 @@
     (c/exec :echo (-> "tarantool/jepsen.lua" io/resource slurp
                       (str/replace #"%TARANTOOL_REPLICATION%" (replica-set test))
                       (str/replace #"%TARANTOOL_IS_READ_ONLY%" (boolean-to-str read-only))
+                      (str/replace #"%TARANTOOL_MVCC%" (boolean-to-str (:mvcc test)))
                       (str/replace #"%TARANTOOL_SINGLE_MODE%" (boolean-to-str (is-single-mode? test)))
                       (str/replace #"%TARANTOOL_DATA_ENGINE%" (:engine test)))
             :> "/etc/tarantool/instances.enabled/jepsen.lua")
