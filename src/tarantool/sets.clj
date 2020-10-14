@@ -6,6 +6,7 @@
                     [checker :as checker]
                     [generator :as gen]
                     [independent :as independent]]
+            [clojure.tools.logging :refer [info warn]]
             [next.jdbc :as j]
             [next.jdbc.sql :as sql]
             [tarantool.client :as cl]
@@ -37,8 +38,9 @@
     (cl/with-error-handling op
       (cl/with-txn-aborts op
         (case (:f op)
-          :add  (do (sql/insert! conn table-name {:value v})
-                    (assoc op :type :ok))
+          :add (let [con (cl/open (jepsen/primary test) test)]
+                 (do (sql/insert! con table-name {:value v})
+                    (assoc op :type :ok)))
 
           :read (->> (sql/query conn [(str "SELECT * FROM " table-name)])
                      (mapv :VALUE)
