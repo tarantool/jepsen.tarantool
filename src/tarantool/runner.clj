@@ -82,7 +82,7 @@
 
 (def crash-pattern
   "An egrep pattern we use to find crashes in the Tarantool logs."
-  "Segmentation fault|too long WAL write|F>")
+  "Segmentation fault|F>")
 
 (defn logged-crashes
   "Takes a test, and returns a map of nodes to strings from their Tarantool logs
