@@ -38,8 +38,9 @@
     (cl/with-error-handling op
       (cl/with-txn-aborts op
         (case (:f op)
-          :add (do (j/execute! conn
-                      [(str "UPDATE " table-name " SET count = count + ? WHERE id = 0") (:value op)])
+          :add (let [con (cl/open (jepsen/primary test) test)]
+                 (do (j/execute! con
+                      [(str "UPDATE " table-name " SET count = count + ? WHERE id = 0") (:value op)]))
                (assoc op :type :ok))
 
           :read (let [value (:COUNT
