@@ -74,8 +74,9 @@
                     (assoc op :type :fail)))))))
 
   (teardown! [_ test]
-    (cl/with-conn-failure-retry conn
-      (j/execute! conn [(str "DROP TABLE IF EXISTS " table-name)])))
+    (when-not (:leave-db-running? test)
+      (cl/with-conn-failure-retry conn
+        (j/execute! conn [(str "DROP TABLE IF EXISTS " table-name)]))))
 
   (close! [_ test]))
 
