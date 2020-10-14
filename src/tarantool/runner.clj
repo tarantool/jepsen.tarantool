@@ -19,6 +19,7 @@
             ;[knossos.model :as model]
             [jepsen.os.ubuntu :as ubuntu]
             [tarantool [db :as db]
+                       [errcode :as err]
                        [register :as register]
                        [sets :as sets]
                        [counter :as counter]]))
@@ -82,7 +83,9 @@
 
 (def crash-pattern
   "An egrep pattern we use to find crashes in the Tarantool logs."
-  "Segmentation fault|F>")
+  (str/join "|"
+            (vector "Segmentation fault|F>"
+            (str/join "|" (map name err/codes)))))
 
 (defn logged-crashes
   "Takes a test, and returns a map of nodes to strings from their Tarantool logs
