@@ -24,6 +24,9 @@
                        [sets :as sets]
                        [counter :as counter]]))
 
+(def minimal-concurrency
+  10)
+
 (def workloads
   "A map of workload names to functions that can take opts and construct
   workloads.
@@ -49,6 +52,14 @@
    ;:pages           pages/workload
    :register        register/workload})
 
+(def standard-workloads
+  "The workload names we run for test-all by default."
+  (remove #{:none} (keys workloads)))
+
+(def workloads-expected-to-pass
+  "A collection of workload names which we expect should actually pass."
+  (remove #{:counter-dec} standard-workloads))
+
 (def workload-options
   "For each workload, a map of workload options to all the values that option
   supports."
@@ -73,13 +84,26 @@
     [nil "--mvcc"
      "Enable MVCC engine"
      :default false]
-    ["-w" "--workload NAME" "Test workload to run"
-     :parse-fn keyword
-     :missing (str "--workload " (cli/one-of workloads))
-     :validate [workloads (cli/one-of workloads)]]
     ["-e" "--engine NAME"
      "What Tarantool data engine should we use?"
      :default "memtx"]])
+
+(def test-all-opts
+  "Command line options for testing everything."
+  [[nil "--only-workloads-expected-to-pass" "Don't run tests which we know fail."
+     :default false]
+   ["-w" "--workload NAME"
+    "Test workload to run. If omitted, runs all workloads."
+    :parse-fn keyword
+    :default nil
+    :validate [workloads (cli/one-of workloads)]]])
+
+(def single-test-opts
+  "Command line options for single tests."
+  [["-w" "--workload NAME" "Test workload to run"
+    :parse-fn keyword
+    :missing (str "--workload " (cli/one-of workloads))
+    :validate [workloads (cli/one-of workloads)]]])
 
 (def crash-pattern
   "An egrep pattern we use to find crashes in the Tarantool logs."
@@ -139,6 +163,10 @@
             :engine    (:engine opts)
             :mvcc      (:mvcc opts)
             :pure-generators true
+            :concurrency (if (and (< (:concurrency opts) minimal-concurrency)
+                                  (= (:workload opts) :register))
+                             10
+                             (:concurrency opts))
             :generator gen
             :checker   (checker/compose {:perf        (checker/perf)
                                          :clock-skew  (checker/clock-plot)
@@ -148,10 +176,31 @@
                                          :exceptions  (checker/unhandled-exceptions)
                                          :workload    (:checker workload)})})))
 
+(defn all-test-options
+  "Takes base cli options, a collection of workloads, and a test count,
+  and constructs a sequence of test options."
+  [cli workloads]
+  (for [w workloads, i (range (:test-count cli))]
+    (assoc cli
+           :workload  w)))
+
+(defn all-tests
+  "Takes parsed CLI options and constructs a sequence of test options, by
+  combining all workloads."
+  [test-fn opts]
+  (let [workloads (if-let [w (:workload opts)] [w]
+                    (if (:only-workloads-expected-to-pass opts)
+                      workloads-expected-to-pass
+                      standard-workloads))]
+    (->> (all-test-options opts workloads)
+         (map test-fn))))
+
 (defn -main
   "Handles command line arguments."
   [& args]
   (cli/run! (merge (cli/single-test-cmd {:test-fn tarantool-test
-                                         :opt-spec cli-opts})
+                                         :opt-spec (concat cli-opts single-test-opts)})
+                   (cli/test-all-cmd {:tests-fn  (partial all-tests tarantool-test)
+                                      :opt-spec (concat cli-opts test-all-opts)})
                    (cli/serve-cmd))
             args))
