@@ -26,12 +26,15 @@
 
   (setup! [this test node]
     (let [conn (cl/open node test)]
-    (assert conn)
-    (cl/with-conn-failure-retry conn
-      (j/execute! conn [(str "CREATE TABLE IF NOT EXISTS " table-name
-                        " (id INT NOT NULL PRIMARY KEY AUTOINCREMENT,
-                        value INT NOT NULL)")]))
-      (assoc this :conn conn :node node)))
+      (assert conn)
+      (if (= node (jepsen/primary test))
+        (cl/with-conn-failure-retry conn
+          (j/execute! conn [(str "CREATE TABLE IF NOT EXISTS " table-name
+                            " (id INT NOT NULL PRIMARY KEY AUTOINCREMENT,
+                            value INT NOT NULL)")])
+          (let [table (clojure.string/upper-case table-name)]
+            (j/execute! conn [(str "SELECT LUA('return box.space." table ":alter{ is_sync = true } or 1')")]))))
+    (assoc this :conn conn :node node)))
 
   (invoke! [this test op]
     (let [[k v] (:value op)]
