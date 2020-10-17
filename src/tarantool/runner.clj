@@ -12,7 +12,6 @@
                     [control :as c]
                     [independent :as independent]
                     [generator :as gen]
-                    [nemesis :as nemesis]
                     [tests :as tests]
                     [util :refer [timeout meh]]]
             [jepsen.checker.timeline :as timeline]
@@ -20,6 +19,7 @@
             [jepsen.os.ubuntu :as ubuntu]
             [tarantool [db :as db]
                        [errcode :as err]
+                       [nemesis :as nemesis]
                        [register :as register]
                        [sets :as sets]
                        [counter :as counter]]))
@@ -76,6 +76,32 @@
    ;:pages       {:serialized-indices  [true false]}
    :register    {}})
 
+(def nemeses
+  "Types of faults a nemesis can create."
+   #{:pause :kill :partition :clock})
+
+(def standard-nemeses
+  "Combinations of nemeses for tests."
+  [[]
+   [:pause]
+   [:kill]
+   [:partition]
+   [:pause :kill :partition :clock]])
+
+(def special-nemeses
+  "A map of special nemesis names to collections of faults."
+  {:none      []
+   :standard  [:pause :kill :partition :clock]
+   :all       [:pause :kill :partition :clock]})
+
+(defn parse-nemesis-spec
+  "Takes a comma-separated nemesis string and
+  returns a collection of keyword faults."
+  [spec]
+  (->> (str/split spec #",")
+       (map keyword)
+       (mapcat #(get special-nemeses % [%]))))
+
 (def cli-opts
   "Options for test runners."
    [["-v" "--version VERSION"
@@ -84,6 +110,15 @@
     [nil "--mvcc"
      "Enable MVCC engine"
      :default false]
+    [nil "--nemesis FAULTS" "A comma-separated list of nemesis faults to enable"
+     :parse-fn parse-nemesis-spec
+     :validate [(partial every? (into nemeses (keys special-nemeses)))
+                (str "Faults must be one of " nemeses " or "
+                     (cli/one-of special-nemeses))]]
+    [nil "--nemesis-interval SECONDS" "How long to wait between nemesis faults"
+     :default  3
+     :parse-fn read-string
+     :validate [#(and (number? %) (pos? %)) "must be a positive number"]]
     ["-e" "--engine NAME"
      "What Tarantool data engine should we use?"
      :default "memtx"]])
@@ -142,7 +177,15 @@
 (defn tarantool-test
   [opts]
   (let [workload ((get workloads (:workload opts)) opts)
-        nemesis  nemesis/noop
+        nemesis  (nemesis/nemesis-package
+                   {:db        db/db
+                    :nodes     (:nodes opts)
+                    :faults    (:nemesis opts)
+                    :partition {:targets [:one :majority :majorities-ring]}
+                    :pause     {:targets [:one :majority :all]}
+                    :kill      {:targets [:one :majority :all]}
+                    :interval  (:nemesis-interval opts)})
+        _ (info (pr-str nemesis))
         gen      (->> (:generator workload)
                       (gen/nemesis (:generator nemesis))
                       (gen/time-limit (:time-limit opts)))
@@ -156,7 +199,7 @@
     (merge tests/noop-test
            opts
            {:client    (:client workload)
-            :nemesis   nemesis
+            :nemesis   (:nemesis nemesis)
             :name      (str "tarantool-" (:version opts))
             :os        ubuntu/os
             :db        (db/db (:version opts))
@@ -168,7 +211,7 @@
                              10
                              (:concurrency opts))
             :generator gen
-            :checker   (checker/compose {:perf        (checker/perf)
+            :checker   (checker/compose {:perf        (checker/perf {:nemeses (:perf nemesis)})
                                          :clock-skew  (checker/clock-plot)
                                          :crash       (crash-checker)
                                          :timeline    (timeline/html)
@@ -177,22 +220,24 @@
                                          :workload    (:checker workload)})})))
 
 (defn all-test-options
-  "Takes base cli options, a collection of workloads, and a test count,
+  "Takes base cli options, a collection of nemeses, workloads, and a test count,
   and constructs a sequence of test options."
-  [cli workloads]
-  (for [w workloads, i (range (:test-count cli))]
+  [cli nemeses workloads]
+  (for [n nemeses, w workloads, i (range (:test-count cli))]
     (assoc cli
+           :nemesis   n
            :workload  w)))
 
 (defn all-tests
   "Takes parsed CLI options and constructs a sequence of test options, by
-  combining all workloads."
-  [test-fn opts]
-  (let [workloads (if-let [w (:workload opts)] [w]
-                    (if (:only-workloads-expected-to-pass opts)
+  combining all workloads and nemeses."
+  [test-fn cli]
+  (let [nemeses   (if-let [n (:nemesis cli)] [n] standard-nemeses)
+        workloads (if-let [w (:workload cli)] [w]
+                    (if (:only-workloads-expected-to-pass cli)
                       workloads-expected-to-pass
                       standard-workloads))]
-    (->> (all-test-options opts workloads)
+    (->> (all-test-options cli nemeses workloads)
          (map test-fn))))
 
 (defn -main

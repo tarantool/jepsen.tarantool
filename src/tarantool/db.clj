@@ -247,6 +247,27 @@
       (stop! test node)
       (wipe! test node))
 
+    db/Primary
+    (setup-primary! [_ test node])
+
+    (primaries [_ test]
+      (primaries test))
+
+    db/Process
+    (start! [_ test node]
+      (info node :starting :tarantool)
+      (c/su
+        (start! test node)))
+
+    (kill! [_ test node]
+      (info node :stopping :tarantool)
+      (c/su
+        (cu/grepkill! :kill "tarantool")))
+
+    db/Pause
+      (pause!  [_ test node] (c/su (cu/grepkill! :stop "tarantool")))
+      (resume! [_ test node] (c/su (cu/grepkill! :cont "tarantool")))
+
     db/LogFiles
     (log-files [_ test node]
       [logfile])))
