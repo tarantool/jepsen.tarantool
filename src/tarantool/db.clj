@@ -192,11 +192,6 @@
   [b]
   (if (true? b) "true" "false"))
 
-(defn is-primary?
-  [test node]
-  (let [p (jepsen/primary test)]
-    (if (= node p) true false)))
-
 (defn is-single-mode?
   [test]
   (let [n (count (:nodes test))]
@@ -214,32 +209,29 @@
          (into [])
          (remove nil?))))
 
+(defn calculate-quorum
+  "Calculate quorum for a given number of nodes."
+  [test]
+  (->> (/ (count (:nodes test)) 2)
+       (double)
+       (Math/round)))
+
 (defn configure!
   "Configure instance"
   [test node]
-  (let [read-only (not (is-primary? test node))]
-    (info "Joining" node "as" (if (true? read-only) "replica" "leader"))
+    (info "Configure instance on" node)
     (c/exec :mkdir :-p "/etc/tarantool/instances.available")
     (c/exec :mkdir :-p "/etc/tarantool/instances.enabled")
     (c/exec :usermod :-a :-G :tarantool :ubuntu)
     (c/exec :echo (-> "tarantool/jepsen.lua" io/resource slurp
+                      (str/replace #"%TARANTOOL_QUORUM%" (str (calculate-quorum test)))
                       (str/replace #"%TARANTOOL_IP_ADDRESS%" node)
                       (str/replace #"%TARANTOOL_REPLICATION%" (replica-set test))
-                      (str/replace #"%TARANTOOL_IS_READ_ONLY%" (boolean-to-str read-only))
                       (str/replace #"%TARANTOOL_MVCC%" (boolean-to-str (:mvcc test)))
                       (str/replace #"%TARANTOOL_SINGLE_MODE%" (boolean-to-str (is-single-mode? test)))
                       (str/replace #"%TARANTOOL_DATA_ENGINE%" (:engine test)))
             :> "/etc/tarantool/instances.enabled/jepsen.lua")
-    (c/exec :cp "/etc/tarantool/instances.enabled/jepsen.lua" "/etc/tarantool/instances.available")))
-
-(defn is-read-only
-  [conn]
-  (j/execute! conn ["SELECT lua('return box.info().ro') IS NOT NULL"]))
-
-(defn set-read-only-mode
-  "Disable and enable read only mode"
-  [conn mode]
-  (j/execute! conn ["SELECT LUA('box.cfg{read_only=true}; return true')"]))
+    (c/exec :cp "/etc/tarantool/instances.enabled/jepsen.lua" "/etc/tarantool/instances.available"))
 
 (defn db
   "Tarantool DB for a particular version."

@@ -8,7 +8,8 @@
             [clojure.tools.logging :refer [debug info warn]]
             [next.jdbc :as j]
             [next.jdbc.sql :as sql]
-            [tarantool.client :as cl]
+            [tarantool [client :as cl]
+                       [db :as db]]
             [jepsen.core :as jepsen]
             [knossos.model :as model]
             [knossos.op :as op]))
@@ -26,7 +27,8 @@
   (setup! [this test node]
     (let [conn (cl/open node test)]
       (assert conn)
-      (when (= node (jepsen/primary test))
+      (Thread/sleep 10000) ; wait for leader election and joining to a cluster
+      (when (= node (first (db/primaries test)))
         (cl/with-conn-failure-retry conn
           (j/execute! conn [(str "CREATE TABLE IF NOT EXISTS " table-name
                             " (id INT NOT NULL PRIMARY KEY,
@@ -40,7 +42,7 @@
     (cl/with-error-handling op
       (cl/with-txn-aborts op
         (case (:f op)
-          :add (let [con (cl/open (jepsen/primary test) test)]
+          :add (let [con (cl/open (first (db/primaries test)) test)]
                  (do (j/execute! con
                       [(str "UPDATE " table-name " SET count = count + ? WHERE id = 0") (:value op)]))
                (assoc op :type :ok))
