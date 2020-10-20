@@ -17,8 +17,8 @@
             [knossos.model :as model]
             [jepsen.checker.timeline :as timeline]
             [jepsen.os.ubuntu :as ubuntu]
-            [tarantool.client :as cl]
-            [tarantool.db :as db]))
+            [tarantool [client :as cl]
+                       [db :as db]]))
 
 (def table-name "register")
 
@@ -37,7 +37,8 @@
   (setup! [this test node]
     (let [conn (cl/open node test)]
       (assert conn)
-      (if (= node (jepsen/primary test))
+      (Thread/sleep 10000) ; wait for leader election and joining to a cluster
+      (if (= node (first (db/primaries test)))
         (cl/with-conn-failure-retry conn
           (j/execute! conn [(str "CREATE TABLE IF NOT EXISTS " table-name
                             " (id INT NOT NULL PRIMARY KEY,
@@ -54,7 +55,7 @@
                    v (:value r)]
                (assoc op :type :ok, :value (independent/tuple k v)))
 
-       :write (do (let [con (cl/open (jepsen/primary test) test)
+       :write (do (let [con (cl/open (first (db/primaries test)) test)
                         table (clojure.string/upper-case table-name)]
                     (j/execute! con
                       [(str "SELECT _UPSERT(" k ", " value ", '" table "')")])
@@ -63,7 +64,7 @@
                            :value (independent/tuple k value))))
 
        :cas (do (let [[old new] value
-                  con (cl/open (jepsen/primary test) test)
+                  con (cl/open (first (db/primaries test)) test)
                   table (clojure.string/upper-case table-name)
                   r (->> (j/execute! con
                            [(str "SELECT _CAS(" k ", " old ", " new ", '" table "')")])

@@ -14,9 +14,11 @@ else
 box.cfg {
     listen = '%TARANTOOL_IP_ADDRESS%:3301';
     replication = { %TARANTOOL_REPLICATION% };
-    read_only = %TARANTOOL_IS_READ_ONLY%;
-    replication_synchro_quorum = 2;
+    replication_synchro_quorum = %TARANTOOL_QUORUM%;
     replication_synchro_timeout = 0.2;
+    replication_timeout = 1;
+    election_mode = 'candidate';
+    election_timeout = 0.5;
     log_level = 6;
     log_nonblock = false;
     too_long_threshold = 0.5;
