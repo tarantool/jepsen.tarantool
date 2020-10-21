@@ -42,7 +42,6 @@
   a keyword here instead."
   {:set             sets/workload
    :counter-inc     counter/workload-inc
-   :counter-dec     counter/workload-dec
    ;:bank            bank/workload
    ;:bank-index      bank/index-workload
    ;:g2              g2/workload
@@ -58,7 +57,7 @@
 
 (def workloads-expected-to-pass
   "A collection of workload names which we expect should actually pass."
-  (remove #{:counter-dec} standard-workloads))
+  (remove #{} standard-workloads))
 
 (def workload-options
   "For each workload, a map of workload options to all the values that option

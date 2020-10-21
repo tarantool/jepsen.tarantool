@@ -1,5 +1,5 @@
 (ns tarantool.counter
-  "Incrementing and decrementing a counter."
+  "Incrementing a counter."
   (:require [jepsen [client :as client]
                     [checker :as checker]
                     [generator :as gen]
@@ -83,12 +83,3 @@
    :checker   (checker/compose
                 {:timeline (timeline/html)
                  :counter  (checker/counter)})})
-
-(defn workload-dec
-  [opts]
-  (assoc (workload-inc opts)
-    :generator (->> (take 100 (cycle [add sub]))
-                    (cons r)
-                    gen/mix
-                    (gen/delay 1/10)
-                    (with-op-index))))
