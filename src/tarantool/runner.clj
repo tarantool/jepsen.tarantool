@@ -15,7 +15,6 @@
                     [tests :as tests]
                     [util :refer [timeout meh]]]
             [jepsen.checker.timeline :as timeline]
-            ;[knossos.model :as model]
             [jepsen.os.ubuntu :as ubuntu]
             [tarantool [db :as db]
                        [errcode :as err]
@@ -42,13 +41,6 @@
   a keyword here instead."
   {:set             sets/workload
    :counter-inc     counter/workload-inc
-   ;:bank            bank/workload
-   ;:bank-index      bank/index-workload
-   ;:g2              g2/workload
-   ;:internal        internal/workload
-   ;:monotonic       monotonic/workload
-   ;:multimonotonic  multimonotonic/workload
-   ;:pages           pages/workload
    :register        register/workload})
 
 (def standard-workloads
@@ -58,22 +50,6 @@
 (def workloads-expected-to-pass
   "A collection of workload names which we expect should actually pass."
   (remove #{} standard-workloads))
-
-(def workload-options
-  "For each workload, a map of workload options to all the values that option
-  supports."
-  {;:set         {:serialized-indices  [true false]
-   ;              :strong-read         [true false]}
-   ;:bank        {:fixed-instances     [true false]
-   ;              :at-query            [true false]}
-   ;:bank-index  {:fixed-instances     [true false]
-   ;              :serialized-indices  [true false]}
-   ;:g2          {:serialized-indices  [true false]}
-   ;:internal    {:serialized-indices  [true false]}
-   ;:monotonic   {:at-query-jitter     [0 10000 100000]}
-   ;:multimonotonic {}
-   ;:pages       {:serialized-indices  [true false]}
-   :register    {}})
 
 (def nemeses
   "Types of faults a nemesis can create."

@@ -3,7 +3,6 @@
             [clojure.string :as str]
             [clojure.java.io :as io]
             [next.jdbc :as j]
-            [next.jdbc.connection :as connection]
             [tarantool.client :as cl]
             [jepsen.os.debian :as debian]
             [jepsen.control.util :as cu]
