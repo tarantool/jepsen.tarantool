@@ -1,0 +1,8 @@
+/.lein-*
+/.nrepl-port
+store
+target
+node
+nodes
+*.snap
+*.xlog
