@@ -26,6 +26,10 @@
 (def minimal-concurrency
   10)
 
+(def engines
+  "Types of engines."
+  #{:memtx :vinyl})
+
 (def workloads
   "A map of workload names to functions that can take opts and construct
   workloads.
@@ -96,7 +100,9 @@
      :validate [#(and (number? %) (pos? %)) "must be a positive number"]]
     ["-e" "--engine NAME"
      "What Tarantool data engine should we use?"
-     :default "memtx"]])
+     :parse-fn keyword
+     :validate [engines (cli/one-of engines)]
+     :default :memtx]])
 
 (def test-all-opts
   "Command line options for testing everything."
@@ -178,7 +184,7 @@
             :name      (str "tarantool-" (:version opts))
             :os        ubuntu/os
             :db        (db/db (:version opts))
-            :engine    (:engine opts)
+            :engine    (name (:engine opts))
             :mvcc      (:mvcc opts)
             :pure-generators true
             :concurrency (if (and (< (:concurrency opts) minimal-concurrency)

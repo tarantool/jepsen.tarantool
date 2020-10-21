@@ -37,6 +37,7 @@
       (Thread/sleep 10000) ; wait for leader election and joining to a cluster
       (if (= node (first (db/primaries test)))
         (cl/with-conn-failure-retry conn
+          (j/execute! conn [(str "SET SESSION \"sql_default_engine\" = '" (:engine test) "'")])
           (j/execute! conn [(str "CREATE TABLE IF NOT EXISTS " table-name
                             " (id INT NOT NULL PRIMARY KEY,
                             value INT NOT NULL)")])
