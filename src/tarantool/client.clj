@@ -3,6 +3,7 @@
   (:require [clojure.string :as str]
             [clojure.tools.logging :refer [info warn]]
             [next.jdbc :as j]
+            [next.jdbc.sql :as sql]
             [dom-top.core :as dt]
             [next.jdbc.connection :as connection]))
 
@@ -55,6 +56,13 @@
                      (info :caught-rollback (:rollback (ex-data e#)))
                      (info :caught-cause    (.cause (:rollback (ex-data e#))))
                      (throw e#))))))
+
+(defn primary
+  [node]
+  (let [conn (open node test)
+        leader (:COLUMN_1 (first (sql/query conn ["SELECT _LEADER()"])))]
+    ;(assert leader)
+    leader))
 
 (defmacro with-txn-aborts
   "Aborts body on rollbacks."

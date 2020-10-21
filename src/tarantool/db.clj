@@ -4,6 +4,7 @@
             [clojure.java.io :as io]
             [next.jdbc :as j]
             [next.jdbc.connection :as connection]
+            [tarantool.client :as cl]
             [jepsen.os.debian :as debian]
             [jepsen.control.util :as cu]
             [jepsen [core :as jepsen]
@@ -203,6 +204,16 @@
       (= n 1) true
       :else false)))
 
+(defn primaries
+  "Return a seq of primaries in a cluster."
+  [test]
+  (if (= 1 (count (:nodes test)))
+    (:nodes test)
+    (->> (pmap cl/primary (:nodes test))
+         (set)
+         (into [])
+         (remove nil?))))
+
 (defn configure!
   "Configure instance"
   [test node]
@@ -212,6 +223,7 @@
     (c/exec :mkdir :-p "/etc/tarantool/instances.enabled")
     (c/exec :usermod :-a :-G :tarantool :ubuntu)
     (c/exec :echo (-> "tarantool/jepsen.lua" io/resource slurp
+                      (str/replace #"%TARANTOOL_IP_ADDRESS%" node)
                       (str/replace #"%TARANTOOL_REPLICATION%" (replica-set test))
                       (str/replace #"%TARANTOOL_IS_READ_ONLY%" (boolean-to-str read-only))
                       (str/replace #"%TARANTOOL_MVCC%" (boolean-to-str (:mvcc test)))
