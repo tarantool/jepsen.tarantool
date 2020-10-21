@@ -126,7 +126,7 @@
         (info "Building Tarantool" (:version test))
         (c/cd dir
           (c/exec :cmake :-DWITH_SYSTEMD:BOOL=ON
-			 :-DCMAKE_BUILD_TYPE=RelWithDebInfo
+			 :-DCMAKE_BUILD_TYPE=Debug
 			 :-DENABLE_DIST:BOOL=ON
 			 :-DENABLE_BACKTRACE:BOOL=ON
 			 "-DCMAKE_INSTALL_LOCALSTATEDIR:PATH=/var"
