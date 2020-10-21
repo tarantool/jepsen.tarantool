@@ -1,7 +1,7 @@
-single_mode = %TARANTOOL_SINGLE_MODE%
+local single_mode = %TARANTOOL_SINGLE_MODE%
 
 if single_mode then
-box.cfg {
+  box.cfg {
     listen = '%TARANTOOL_IP_ADDRESS%:3301';
     log_level = 6;
     log_nonblock = false;
@@ -9,9 +9,9 @@ box.cfg {
     custom_proc_title = 'jepsen';
     memtx_memory = 1024*1024*1024;
     memtx_use_mvcc_engine = %TARANTOOL_MVCC%;
-}
+  }
 else
-box.cfg {
+  box.cfg {
     listen = '%TARANTOOL_IP_ADDRESS%:3301';
     replication = { %TARANTOOL_REPLICATION% };
     replication_synchro_quorum = %TARANTOOL_QUORUM%;
@@ -25,7 +25,7 @@ box.cfg {
     custom_proc_title = 'jepsen';
     memtx_memory = 1024*1024*1024;
     memtx_use_mvcc_engine = %TARANTOOL_MVCC%;
-}
+  }
 end
 
 local function bootstrap()
