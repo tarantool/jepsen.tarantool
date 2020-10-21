@@ -12,7 +12,6 @@
             [tarantool [client :as cl]
                        [db :as db]]
             [jepsen.core :as jepsen]
-            [knossos.model :as model]
             [knossos.op :as op]))
 
 (def table-name "sets")

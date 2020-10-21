@@ -9,14 +9,11 @@
                     [control :as c]
                     [independent :as independent]
                     [generator :as gen]
-                    [nemesis :as nemesis]
-                    [tests :as tests]
                     [util :refer [timeout meh]]]
             [next.jdbc :as j]
             [next.jdbc.sql :as sql]
             [knossos.model :as model]
             [jepsen.checker.timeline :as timeline]
-            [jepsen.os.ubuntu :as ubuntu]
             [tarantool [client :as cl]
                        [db :as db]]))
 
