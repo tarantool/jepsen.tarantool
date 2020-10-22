@@ -153,7 +153,7 @@
   [opts]
   (let [workload ((get workloads (:workload opts)) opts)
         nemesis  (nemesis/nemesis-package
-                   {:db        db/db
+                   {:db        (db/db (:version opts))
                     :nodes     (:nodes opts)
                     :faults    (:nemesis opts)
                     :partition {:targets [:one :majority :majorities-ring]}
