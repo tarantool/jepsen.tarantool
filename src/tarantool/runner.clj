@@ -66,7 +66,7 @@
 (def special-nemeses
   "A map of special nemesis names to collections of faults."
   {:none      []
-   :standard  [:pause :kill :partition :clock]
+   :standard  [:partition :clock]
    :all       [:pause :kill :partition :clock]})
 
 (defn parse-nemesis-spec
