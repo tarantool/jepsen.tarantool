@@ -156,9 +156,9 @@
                    {:db        (db/db (:version opts))
                     :nodes     (:nodes opts)
                     :faults    (:nemesis opts)
-                    :partition {:targets [:one :majority :majorities-ring]}
-                    :pause     {:targets [:one :majority :all]}
-                    :kill      {:targets [:one :majority :all]}
+                    :partition {:targets [:one :majority :majorities-ring :primaries]}
+                    :pause     {:targets [:one :majority :all :primaries]}
+                    :kill      {:targets [:one :majority :all :primaries]}
                     :interval  (:nemesis-interval opts)})
         _ (info (pr-str nemesis))
         gen      (->> (:generator workload)
