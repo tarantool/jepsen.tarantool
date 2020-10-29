@@ -17,6 +17,7 @@
             [jepsen.checker.timeline :as timeline]
             [jepsen.os.ubuntu :as ubuntu]
             [tarantool [db :as db]
+                       [bank :as bank]
                        [errcode :as err]
                        [nemesis :as nemesis]
                        [register :as register]
@@ -39,13 +40,17 @@
 
   Or, for some special cases where nemeses and workloads are coupled, we return
   a keyword here instead."
-  {:set             sets/workload
+  {:bank            bank/workload
+   :bank-multitable bank/multitable-workload
+   :bank-lua        bank/workload-lua
+   :bank-multitable-lua bank/multitable-workload-lua
+   :set             sets/workload
    :counter-inc     counter/workload-inc
    :register        register/workload})
 
 (def standard-workloads
   "The workload names we run for test-all by default."
-  (remove #{:none} (keys workloads)))
+  (remove #{:bank :bank-multitable} (keys workloads)))
 
 (def workloads-expected-to-pass
   "A collection of workload names which we expect should actually pass."
@@ -185,6 +190,9 @@
                                   (= (:workload opts) :register))
                              minimal-concurrency
                              (:concurrency opts))
+            :accounts  (vec (range 10)) ; bank-specific option
+            :max-transfer 5 ; bank-specific option
+            :total-amount 100 ; bank-specific option
             :generator gen
             :checker   (checker/compose {:perf        (checker/perf {:nemeses (:perf nemesis)})
                                          :clock-skew  (checker/clock-plot)
