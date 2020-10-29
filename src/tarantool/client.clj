@@ -5,9 +5,17 @@
             [next.jdbc :as j]
             [next.jdbc.sql :as sql]
             [dom-top.core :as dt]
+            [jepsen [util :as util :refer [default timeout]]]
             [next.jdbc.connection :as connection]))
 
 (def max-timeout "Longest timeout, in ms" 10000000)
+
+(def txn-timeout     5000)
+(def connect-timeout 10000)
+(def socket-timeout  10000)
+(def open-timeout
+  "How long will we wait for an open call by default"
+  5000)
 
 (defn conn-spec
    "JDBC connection spec for a node."
@@ -71,6 +79,44 @@
      (if (= ::abort res#)
        (assoc ~op :type :fail, :error :conflict)
        res#)))
+
+(defmacro with-txn-retries
+  "Retries body on rollbacks."
+  [& body]
+  `(loop []
+     (let [res# (capture-txn-abort ~@body)]
+       (if (= ::abort res#)
+         (recur)
+         res#))))
+
+(defmacro capture-txn-abort
+  "Converts aborted transactions to an ::abort keyword"
+  [& body]
+  `(try ~@body
+        (catch java.sql.SQLTransactionRollbackException e#
+          (if (= (.getMessage e#) rollback-msg)
+            ::abort
+            (throw e#)))
+        (catch java.sql.BatchUpdateException e#
+          (if (= (.getMessage e#) rollback-msg)
+            ::abort
+            (throw e#)))
+        (catch java.sql.SQLException e#
+          (condp re-find (.getMessage e#)
+            #"can not retry select for update statement" ::abort
+            #"\[try again later\]" ::abort
+            (throw e#)))))
+
+(defmacro with-txn
+  "Executes body in a transaction, with a timeout, automatically retrying
+  conflicts and handling common errors."
+  [op [c conn] & body]
+  `(timeout (+ 1000 socket-timeout) (assoc ~op :type :info, :error :timed-out)
+            (with-error-handling ~op
+              (with-txn-retries
+                (j/with-transaction [~c ~conn]
+                  ~@body)))))
+
 
 (defmacro with-conn-failure-retry
  "DBMS tends to be flaky for a few seconds after starting up, which can wind

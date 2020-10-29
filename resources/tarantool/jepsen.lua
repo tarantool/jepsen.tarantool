@@ -103,6 +103,55 @@ box.schema.func.create('_LEADER',
     param_list = {},
     exports = {'LUA', 'SQL'},
     is_deterministic = true})
+
+--[[ Function transfers money between two accounts presented by tuples in a table
+and returns true in case of success and false in other cases. ]]
+box.schema.func.create('_WITHDRAW',
+   {language = 'LUA',
+    returns = 'boolean',
+    body = [[function(table, from, to, amount)
+             local s = box.space[table]
+             box.begin()
+               local b1 = s:get(from)[2] - amount
+               local b2 = s:get(to)[2] + amount
+               if b1 < 0 or b2 < 0 then
+                 return false
+               end
+               s:update(from, {{'-', 2, amount}})
+               s:update(to, {{'+', 2, amount}})
+             box.commit()
+
+             return true
+             end]],
+    is_sandboxed = false,
+    param_list = {'string', 'integer', 'integer', 'integer'},
+    exports = {'LUA', 'SQL'},
+    is_deterministic = true})
+
+--[[ Function transfers money between two accounts presented by different tables
+and returns true in case of success and false in other cases. ]]
+box.schema.func.create('_WITHDRAW_MULTITABLE',
+   {language = 'LUA',
+    returns = 'boolean',
+    body = [[function(table_from, table_to, amount)
+             local space_from = box.space[table_from]
+             local space_to = box.space[table_to]
+             box.begin()
+               local bal_from = space_from:get(0)[2] - amount
+               local bal_to = space_to:get(0)[2] + amount
+               if bal_from < 0 or bal_to < 0 then
+                 return false
+               end
+               space_from:update(0, {{'-', 2, amount}})
+               space_to:update(0, {{'+', 2, amount}})
+             box.commit()
+
+             return true
+             end]],
+    is_sandboxed = false,
+    param_list = {'string', 'string', 'integer'},
+    exports = {'LUA', 'SQL'},
+    is_deterministic = true})
 end
 
 box.once('jepsen', bootstrap)
