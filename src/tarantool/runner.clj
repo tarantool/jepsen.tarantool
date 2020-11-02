@@ -183,7 +183,7 @@
             :pure-generators true
             :concurrency (if (and (< (:concurrency opts) minimal-concurrency)
                                   (= (:workload opts) :register))
-                             10
+                             minimal-concurrency
                              (:concurrency opts))
             :generator gen
             :checker   (checker/compose {:perf        (checker/perf {:nemeses (:perf nemesis)})
