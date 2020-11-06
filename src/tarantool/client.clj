@@ -65,13 +65,6 @@
                      (info :caught-cause    (.cause (:rollback (ex-data e#))))
                      (throw e#))))))
 
-(defn primary
-  [node]
-  (let [conn (open node test)
-        leader (:COLUMN_1 (first (sql/query conn ["SELECT _LEADER()"])))]
-    ;(assert leader)
-    leader))
-
 (defmacro with-txn-aborts
   "Aborts body on rollbacks."
   [op & body]
@@ -178,3 +171,9 @@
 (def rollback-msg
   "Some drivers have a few exception classes that use this message."
   "Deadlock found when trying to get lock; try restarting transaction")
+
+(defn primary
+  [node]
+  (let [conn (open node test)]
+    (with-conn-failure-retry conn
+      (:COLUMN_1 (first (sql/query conn ["SELECT _LEADER()"]))))))
