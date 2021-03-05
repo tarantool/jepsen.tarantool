@@ -49,8 +49,10 @@
    :register        register/workload})
 
 (def standard-workloads
-  "The workload names we run for test-all by default."
-  (remove #{:bank :bank-multitable} (keys workloads)))
+  "The workload names we run for test-all by default.
+  :bank-multitable-lua disabled due to a bug
+  https://github.com/tarantool/tarantool/issues/5848"
+  (remove #{:bank :bank-multitable :bank-multitable-lua} (keys workloads)))
 
 (def workloads-expected-to-pass
   "A collection of workload names which we expect should actually pass."
