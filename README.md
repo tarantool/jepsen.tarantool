@@ -63,7 +63,7 @@ lein run test --help
 
 ## License
 
-Copyright © 2020 Mail.Ru Group Ltd
+Copyright © 2020-2021 Mail.Ru Group Ltd
 
 This program and the accompanying materials are made available under the
 terms of the Eclipse Public License 2.0 which is available at
