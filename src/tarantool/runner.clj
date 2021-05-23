@@ -1,6 +1,7 @@
 (ns tarantool.runner
   "Run Tarantool tests."
   (:require [clojure.tools.logging :refer [info warn]]
+            [clojure.pprint :refer [pprint]]
             [clojure.string :as str]
             [clojure.java.io :as io]
             [next.jdbc :as j]
@@ -222,6 +223,10 @@
                     (if (:only-workloads-expected-to-pass cli)
                       workloads-expected-to-pass
                       standard-workloads))]
+    (println "\nUsed workloads:")
+    (pprint workloads)
+    (println "\nUsed nemeses:")
+    (pprint nemeses)
     (->> (all-test-options cli nemeses workloads)
          (map test-fn))))
 
