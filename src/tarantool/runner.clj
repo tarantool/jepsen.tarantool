@@ -50,14 +50,13 @@
    :register        register/workload})
 
 (def standard-workloads
-  "The workload names we run for test-all by default.
-  :bank-multitable-lua disabled due to a bug
-  https://github.com/tarantool/tarantool/issues/5848"
-  (remove #{:bank :bank-multitable :bank-multitable-lua} (keys workloads)))
+  "The workload names we run for test-all by default."
+  (remove #{} (keys workloads)))
 
 (def workloads-expected-to-pass
-  "A collection of workload names which we expect should actually pass."
-  (remove #{} standard-workloads))
+  "A collection of workload names which we expect should actually pass.
+  https://github.com/tarantool/jepsen.tarantool/issues/83"
+  (remove #{:bank :bank-multitable} standard-workloads))
 
 (def nemeses
   "Types of faults a nemesis can create."
@@ -109,7 +108,7 @@
 (def test-all-opts
   "Command line options for testing everything."
   [[nil "--only-workloads-expected-to-pass" "Don't run tests which we know fail."
-     :default false]
+     :default true]
    ["-w" "--workload NAME"
     "Test workload to run. If omitted, runs all workloads."
     :parse-fn keyword
