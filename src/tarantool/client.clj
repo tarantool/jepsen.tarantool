@@ -9,13 +9,8 @@
             [next.jdbc.connection :as connection]))
 
 (def max-timeout "Longest timeout, in ms" 10000000)
-
-(def txn-timeout     5000)
 (def connect-timeout 10000)
 (def socket-timeout  10000)
-(def open-timeout
-  "How long will we wait for an open call by default"
-  5000)
 
 (defn conn-spec
    "JDBC connection spec for a node."
