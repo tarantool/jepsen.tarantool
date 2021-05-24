@@ -22,19 +22,18 @@
       (assert conn)
       (assoc this :conn conn :node node)))
 
-  (setup! [this test node]
-    (let [conn (cl/open node test)]
+  (setup! [this test]
       (assert conn)
       (Thread/sleep 10000) ; wait for leader election and joining to a cluster
-      (when (= node (first (db/primaries test)))
+      ;(when (= (:node conn) (first (db/primaries test)))
         (cl/with-conn-failure-retry conn
           (j/execute! conn [(str "CREATE TABLE IF NOT EXISTS " table-name
                             " (id INT NOT NULL PRIMARY KEY,
                             count INT NOT NULL)")]))
           (sql/insert! conn table-name {:id 0 :count 0})
           (let [table (clojure.string/upper-case table-name)]
-            (j/execute! conn [(str "SELECT LUA('return box.space." table ":alter{ is_sync = true } or 1')")])))
-      (assoc this :conn conn :node node)))
+            (j/execute! conn [(str "SELECT LUA('return box.space." table ":alter{ is_sync = true } or 1')")]))
+      (assoc this :conn conn :node (:node conn)))
 
   (invoke! [this test op]
     (cl/with-error-handling op

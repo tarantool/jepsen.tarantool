@@ -5,7 +5,7 @@
             :url "https://www.eclipse.org/legal/epl-2.0/"}
   :main tarantool.runner
   :dependencies [[org.clojure/clojure "1.10.1"]
-                 [jepsen "0.1.18"]
+                 [jepsen "0.2.3"]
                  [expound "0.8.5"]
                  [seancorfield/next.jdbc "1.1.582"]
                  [org.tarantool/connector "1.9.4"]

@@ -249,10 +249,11 @@
       (wipe! test node))
 
     db/Primary
-    (setup-primary! [_ test node])
+    (setup-primary! [db test node])
 
-    (primaries [_ test]
-      (primaries test))
+    (primaries [db test]
+      "Return a seq of primaries in a cluster."
+      ["84.23.53.151"]) ; FIXME
 
     db/Process
     (start! [_ test node]
