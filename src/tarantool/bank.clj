@@ -25,11 +25,10 @@
     (let [conn (cl/open node test)]
       (assoc this :conn conn :node node)))
 
-  (setup! [this test node]
+  (setup! [this test]
     (locking BankClientWithLua
-      (let [conn (cl/open node test)]
        (Thread/sleep 10000) ; wait for leader election and joining to a cluster
-       (when (= node (first (db/primaries test)))
+       ;(when (= (:node conn) (first (db/primaries test)))
          (cl/with-conn-failure-retry conn
            (info (str "Creating table " table-name))
            (j/execute! conn [(str "CREATE TABLE IF NOT EXISTS " table-name
@@ -43,8 +42,8 @@
                (sql/insert! conn table-name {:id      a
                                              :balance (if (= a (first (:accounts test)))
                                                        (:total-amount test)
-                                                       0)}))))
-        (assoc this :conn conn :node node))))
+                                                       0)})))
+        (assoc this :conn conn :node (:node conn))))
 
   (invoke! [this test op]
     (try
@@ -74,13 +73,16 @@
 (defrecord MultiBankClientWithLua [conn tbl-created?]
   client/Client
   (open! [this test node]
-    (assoc this :conn (cl/open node test)))
+    (let [c (cl/open node test)]
+      (assoc this
+             :node          node
+             :conn          c
+             :initialized?  (atom false))))
 
-  (setup! [this test node]
+  (setup! [this test]
     (locking tbl-created?
-      (let [conn (cl/open node test)]
         (Thread/sleep 10000) ; wait for leader election and joining to a cluster
-        (when (= node (first (db/primaries test)))
+        ;(when (= (:node conn) (first (db/primaries test)))
           (when (compare-and-set! tbl-created? false true)
             (cl/with-conn-failure-retry conn
               (doseq [a (:accounts test)]
@@ -96,8 +98,8 @@
                   (sql/insert! conn (str table-name a)
                              {:id 0
                               :account_id a
-                              :balance 10})))))
-        (assoc this :conn conn :node node))))
+                              :balance 10}))))
+        (assoc this :conn conn :node (:node conn))))
 
   (invoke! [this test op]
     (try
@@ -142,11 +144,10 @@
     (let [conn (cl/open node test)]
       (assoc this :conn conn :node node)))
 
-  (setup! [this test node]
+  (setup! [this test]
     (locking BankClient
-      (let [conn (cl/open node test)]
        (Thread/sleep 10000) ; wait for leader election and joining to a cluster
-       (when (= node (first (db/primaries test)))
+       ;(when (= (:node conn) (first (db/primaries test)))
          (cl/with-conn-failure-retry conn
            (info (str "Creating table " table-name))
            (j/execute! conn [(str "CREATE TABLE IF NOT EXISTS " table-name
@@ -160,8 +161,8 @@
                (sql/insert! conn table-name {:id      a
                                              :balance (if (= a (first (:accounts test)))
                                                        (:total-amount test)
-                                                       0)}))))
-        (assoc this :conn conn :node node))))
+                                                       0)})))
+        (assoc this :conn conn :node (:node conn))))
 
   (invoke! [this test op]
     (try
@@ -203,11 +204,10 @@
   (open! [this test node]
     (assoc this :conn (cl/open node test)))
 
-  (setup! [this test node]
+  (setup! [this test]
     (locking tbl-created?
-      (let [conn (cl/open node test)]
         (Thread/sleep 10000) ; wait for leader election and joining to a cluster
-        (when (= node (first (db/primaries test)))
+        ;(when (= (:node conn) (first (db/primaries test)))
           (when (compare-and-set! tbl-created? false true)
             (cl/with-conn-failure-retry conn
               (doseq [a (:accounts test)]
@@ -223,8 +223,8 @@
                              {:id 0
                               :balance (if (= a (first (:accounts test)))
                                          (:total-amount test)
-                                         0)})))))
-        (assoc this :conn conn :node node))))
+                                         0)})))
+        (assoc this :conn conn :node (:node conn)))))
 
   (invoke! [this test op]
     (try
