@@ -114,13 +114,11 @@
 
         :transfer
         (let [{:keys [from to amount]} (:value op)
-              from (str table-name from)
-              to   (str table-name to)
-              con  (cl/open (first (db/primaries test)) test)
-              from_uppercase (clojure.string/upper-case from)
-              to_uppercase (clojure.string/upper-case to)
+              table_from    (str (clojure.string/upper-case table-name) from)
+              table_to      (str (clojure.string/upper-case table-name) to)
+              con           (cl/open (first (db/primaries test)) test)
               r (-> con
-                    (sql/query [(str "SELECT _WITHDRAW_MULTITABLE('" from_uppercase "','" to_uppercase "'," amount ")")])
+                    (sql/query [(str "SELECT _WITHDRAW_MULTITABLE('" table_from "','" table_to "'," amount ")")])
                     first
                     :COLUMN_1)]
           (if (false? r)
