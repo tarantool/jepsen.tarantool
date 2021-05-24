@@ -87,29 +87,33 @@
               (doseq [a (:accounts test)]
                 (info "Creating table" table-name a)
                 (j/execute! conn [(str "CREATE TABLE IF NOT EXISTS " table-name a
-                                       "(id     INT NOT NULL PRIMARY KEY,"
+                                       "(id             INT NOT NULL PRIMARY KEY,"
+                                       "account_id      INT NOT NULL,"
                                        "balance INT NOT NULL)")])
                   (info "Populating account" a)
                   (sql/insert! conn (str table-name a)
                              {:id 0
-                              :balance (if (= a (first (:accounts test)))
-                                         (:total-amount test)
-                                         0)})))))
+                              :account_id a
+                              :balance 10})))))
         (assoc this :conn conn :node node))))
 
   (invoke! [this test op]
     (try
+      ; op struct example: {:type :invoke, :f :read, :process 0, :time 65183208864}
       (case (:f op)
         :read
-        (->> (:accounts test)
-             (map (fn [x]
-                    [x (->> (sql/query conn [(str "SELECT balance FROM " table-name
-                                             x)]
-                                     {:row-fn :BALANCE})
-                            first)]))
+        (->> (sql/query conn ["SELECT ACCOUNT_ID, BALANCE FROM ACCOUNTS0 UNION
+                               SELECT ACCOUNT_ID, BALANCE FROM ACCOUNTS1 UNION
+                               SELECT ACCOUNT_ID, BALANCE FROM ACCOUNTS2 UNION
+                               SELECT ACCOUNT_ID, BALANCE FROM ACCOUNTS3 UNION
+                               SELECT ACCOUNT_ID, BALANCE FROM ACCOUNTS4 UNION
+                               SELECT ACCOUNT_ID, BALANCE FROM ACCOUNTS5 UNION
+                               SELECT ACCOUNT_ID, BALANCE FROM ACCOUNTS6 UNION
+                               SELECT ACCOUNT_ID, BALANCE FROM ACCOUNTS7 UNION
+                               SELECT ACCOUNT_ID, BALANCE FROM ACCOUNTS8 UNION
+                               SELECT ACCOUNT_ID, BALANCE FROM ACCOUNTS9"])
+             (map (juxt :ACCOUNT_ID :BALANCE))
              (into (sorted-map))
-             (map (fn [[k {b :BALANCE}]] [k b]))
-             (into {})
              (assoc op :type :ok, :value))
 
         :transfer
