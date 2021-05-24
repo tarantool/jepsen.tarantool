@@ -137,13 +137,13 @@ box.schema.func.create('_WITHDRAW_MULTITABLE',
              local space_from = box.space[table_from]
              local space_to = box.space[table_to]
              box.begin()
-               local bal_from = space_from:get(0)[2] - amount
-               local bal_to = space_to:get(0)[2] + amount
+               local bal_from = space_from:get(0).BALANCE - amount
+               local bal_to = space_to:get(0).BALANCE + amount
                if bal_from < 0 or bal_to < 0 then
                  return false
                end
-               space_from:update(0, {{'-', 2, amount}})
-               space_to:update(0, {{'+', 2, amount}})
+               space_from:update(0, {{'-', 'BALANCE', amount}})
+               space_to:update(0, {{'+', 'BALANCE', amount}})
              box.commit()
 
              return true
