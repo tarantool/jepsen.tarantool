@@ -112,13 +112,13 @@ box.schema.func.create('_WITHDRAW',
     body = [[function(table, from, to, amount)
              local s = box.space[table]
              box.begin()
-               local b1 = s:get(from)[2] - amount
-               local b2 = s:get(to)[2] + amount
+               local b1 = s:get(from).BALANCE - amount
+               local b2 = s:get(to).BALANCE + amount
                if b1 < 0 or b2 < 0 then
                  return false
                end
-               s:update(from, {{'-', 2, amount}})
-               s:update(to, {{'+', 2, amount}})
+               s:update(from, {{'-', 'BALANCE', amount}})
+               s:update(to, {{'+', 'BALANCE', amount}})
              box.commit()
 
              return true
