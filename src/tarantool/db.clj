@@ -155,7 +155,7 @@
   (c/su
       (c/exec :curl :-O :-L "https://tarantool.io/installer.sh")
       (c/exec :chmod :+x "./installer.sh")
-      (c/exec (str "VER=" version) "./installer.sh")
+      (c/exec :env "DEBIAN_FRONTEND=noninteractive" (str "VER=" version) "./installer.sh")
       (c/su (c/exec :systemctl :stop "tarantool@example"))))
 
 (defn install!
