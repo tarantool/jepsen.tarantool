@@ -187,10 +187,6 @@
   (c/su (c/exec :dpkg :--purge :--force-all :tarantool))
   (c/su (c/exec :dpkg :--configure :-a)))
 
-(defn boolean-to-str
-  [b]
-  (if (true? b) "true" "false"))
-
 (defn is-single-mode?
   [test]
   (let [n (count (:nodes test))]
@@ -226,8 +222,8 @@
                       (str/replace #"%TARANTOOL_QUORUM%" (str (calculate-quorum test)))
                       (str/replace #"%TARANTOOL_IP_ADDRESS%" node)
                       (str/replace #"%TARANTOOL_REPLICATION%" (replica-set test))
-                      (str/replace #"%TARANTOOL_MVCC%" (boolean-to-str (:mvcc test)))
-                      (str/replace #"%TARANTOOL_SINGLE_MODE%" (boolean-to-str (is-single-mode? test)))
+                      (str/replace #"%TARANTOOL_MVCC%" (str (:mvcc test)))
+                      (str/replace #"%TARANTOOL_SINGLE_MODE%" (str (is-single-mode? test)))
                       (str/replace #"%TARANTOOL_DATA_ENGINE%" (:engine test)))
             :> "/etc/tarantool/instances.enabled/jepsen.lua")
     (c/exec :cp "/etc/tarantool/instances.enabled/jepsen.lua" "/etc/tarantool/instances.available"))
