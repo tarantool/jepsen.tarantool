@@ -19,6 +19,7 @@ change log follows the conventions of
 - Enable :primaries for partition, kill and pause nemeses (#59).
 - Fix test bank with accounts in separate tables.
 - Mark a singleton instance as a leader manually (#92).
+- Enable synchronous mode for spaces in bank tests.
 
 ### Changed
 
