@@ -39,7 +39,7 @@
        (Thread/sleep 10000) ; wait for leader election and joining to a cluster
        (when (= node (first (db/primaries test)))
          (cl/with-conn-failure-retry conn
-           (info (str "Creating table " table-name))
+           (info "Creating table " table-name)
            (j/execute! conn [(str "CREATE TABLE IF NOT EXISTS " table-name
                              "(id INT NOT NULL PRIMARY KEY,
                              balance INT NOT NULL)")])
@@ -73,7 +73,7 @@
 
   (teardown! [_ test]
     (when-not (:leave-db-running? test)
-      (info (str "Drop table" table-name))
+      (info "Drop table" table-name)
       (cl/with-conn-failure-retry conn
         (j/execute! conn [(str "DROP TABLE IF EXISTS " table-name)]))))
 
@@ -170,7 +170,7 @@
        (Thread/sleep 10000) ; wait for leader election and joining to a cluster
        (when (= node (first (db/primaries test)))
          (cl/with-conn-failure-retry conn
-           (info (str "Creating table " table-name))
+           (info "Creating table " table-name)
            (j/execute! conn [(str "CREATE TABLE IF NOT EXISTS " table-name
                              "(id INT NOT NULL PRIMARY KEY,
                              balance INT NOT NULL)")])
@@ -214,7 +214,7 @@
 
   (teardown! [_ test]
     (when-not (:leave-db-running? test)
-      (info (str "Drop table" table-name))
+      (info "Drop table" table-name)
       (cl/with-conn-failure-retry conn
         (j/execute! conn [(str "DROP TABLE IF EXISTS " table-name)]))))
 
