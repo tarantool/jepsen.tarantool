@@ -68,7 +68,7 @@
 
   (teardown! [_ test]
     (when-not (:leave-db-running? test)
-      (info (str "Drop table" table-name))
+      (info "Drop table" table-name)
       (cl/with-conn-failure-retry conn
         (j/execute! conn [(str "DROP TABLE IF EXISTS " table-name)]))))
 
@@ -204,7 +204,7 @@
 
   (teardown! [_ test]
     (when-not (:leave-db-running? test)
-      (info (str "Drop table" table-name))
+      (info "Drop table" table-name)
       (cl/with-conn-failure-retry conn
         (j/execute! conn [(str "DROP TABLE IF EXISTS " table-name)]))))
 
