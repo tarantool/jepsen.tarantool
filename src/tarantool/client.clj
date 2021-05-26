@@ -67,6 +67,20 @@
     ;(assert leader)
     leader))
 
+(defn is-ro?
+  [conn]
+  (let [r (-> conn
+          (sql/query ["SELECT lua('return box.cfg.read_only or false')"])
+          first
+          :COLUMN_1
+          Boolean/valueOf
+          boolean)]
+  r))
+
+(defn is-rw?
+  [conn]
+  (not (is-ro? conn)))
+
 (defmacro with-txn-aborts
   "Aborts body on rollbacks."
   [op & body]
