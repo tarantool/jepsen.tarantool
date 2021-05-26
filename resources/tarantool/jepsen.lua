@@ -90,7 +90,7 @@ box.schema.func.create('_UPSERT',
 of synchronous cluster with enabled Raft consensus protocol is started.
 Returns nil when Raft is disabled. Example: SELECT _LEADER()
 ]]
-box.schema.func.create('_LEADER',
+box.schema.func.create('_LEADER_IPADDR',
    {language = 'LUA',
     returns = 'string',
     body = [[function()
