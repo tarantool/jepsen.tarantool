@@ -63,7 +63,7 @@
 (defn primary
   [node]
   (let [conn (open node test)
-        leader (:COLUMN_1 (first (sql/query conn ["SELECT _LEADER()"])))]
+        leader (:COLUMN_1 (first (sql/query conn ["SELECT _LEADER_IPADDR()"])))]
     ;(assert leader)
     leader))
 
