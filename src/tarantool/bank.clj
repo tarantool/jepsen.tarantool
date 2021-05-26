@@ -43,6 +43,9 @@
            (j/execute! conn [(str "CREATE TABLE IF NOT EXISTS " table-name
                              "(id INT NOT NULL PRIMARY KEY,
                              balance INT NOT NULL)")])
+           (j/execute! conn [(str "SELECT LUA('return box.space."
+                                  (clojure.string/upper-case table-name)
+                                  ":alter{ is_sync = true } or 1')")])
            (doseq [a (:accounts test)]
                (info "Populating account")
                (sql/insert! conn table-name
@@ -103,6 +106,9 @@
                                        "(id             INT NOT NULL PRIMARY KEY,"
                                        "account_id      INT NOT NULL,"
                                        "balance INT NOT NULL)")])
+                (j/execute! conn [(str "SELECT LUA('return box.space."
+                                       (clojure.string/upper-case (str table-name a))
+                                       ":alter{ is_sync = true } or 1')")])
                   (info "Populating account" a)
                   (sql/insert! conn (str table-name a)
                       {:id 0
@@ -174,6 +180,9 @@
            (j/execute! conn [(str "CREATE TABLE IF NOT EXISTS " table-name
                              "(id INT NOT NULL PRIMARY KEY,
                              balance INT NOT NULL)")])
+           (j/execute! conn [(str "SELECT LUA('return box.space."
+                                  (clojure.string/upper-case table-name)
+                                  ":alter{ is_sync = true } or 1')")])
            (doseq [a (:accounts test)]
                (info "Populating account")
                    (sql/insert! conn table-name
@@ -243,6 +252,9 @@
                 (j/execute! conn [(str "CREATE TABLE IF NOT EXISTS " table-name a
                                        "(id     INT NOT NULL PRIMARY KEY,"
                                        "balance INT NOT NULL)")])
+                (j/execute! conn [(str "SELECT LUA('return box.space."
+                                       (clojure.string/upper-case (str table-name a))
+                                       ":alter{ is_sync = true } or 1')")])
                   (info "Populating account" a)
                   (sql/insert! conn (str table-name a)
                       {:id 0
