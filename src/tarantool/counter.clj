@@ -50,10 +50,7 @@
                     [(str "SELECT count FROM " table-name " WHERE id = 0")])))]
                 (assoc op :type :ok :value value))))))
 
-  (teardown! [_ test]
-    (when-not (:leave-db-running? test)
-      (cl/with-conn-failure-retry conn
-        (j/execute! conn [(str "DROP TABLE IF EXISTS " table-name)]))))
+  (teardown! [_ test])
 
   (close! [_ test]))
 
