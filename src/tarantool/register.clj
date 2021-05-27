@@ -74,10 +74,7 @@
                            :value (independent/tuple k value))
                     (assoc op :type :fail)))))))
 
-  (teardown! [_ test]
-    (when-not (:leave-db-running? test)
-      (cl/with-conn-failure-retry conn
-        (j/execute! conn [(str "DROP TABLE IF EXISTS " table-name)]))))
+  (teardown! [_ test])
 
   (close! [_ test]))
 

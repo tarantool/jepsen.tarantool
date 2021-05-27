@@ -50,10 +50,7 @@
                      (mapv :VALUE)
                      (assoc op :type :ok, :value)))))))
 
-  (teardown! [_ test]
-    (when-not (:leave-db-running? test)
-      (cl/with-conn-failure-retry conn
-        (j/execute! conn [(str "DROP TABLE IF EXISTS " table-name)]))))
+  (teardown! [_ test])
 
   (close! [_ test]))
 

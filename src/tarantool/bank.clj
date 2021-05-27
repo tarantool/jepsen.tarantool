@@ -66,11 +66,7 @@
                 (assoc op :type :fail, :value {:from from :to to :amount amount})
                 (assoc op :type :ok))))))
 
-  (teardown! [_ test]
-    (when-not (:leave-db-running? test)
-      (info "Drop table" table-name)
-      (cl/with-conn-failure-retry conn
-        (j/execute! conn [(str "DROP TABLE IF EXISTS " table-name)]))))
+  (teardown! [_ test])
 
   (close! [_ test]))
 
@@ -135,12 +131,7 @@
                 (assoc op :type :fail)
                 (assoc op :type :ok))))))
 
-  (teardown! [_ test]
-    (when-not (:leave-db-running? test)
-      (cl/with-conn-failure-retry conn
-        (doseq [a (:accounts test)]
-          (info "Drop table" table-name a)
-          (j/execute! conn [(str "DROP TABLE IF EXISTS " table-name a)])))))
+  (teardown! [_ test])
 
   (close! [_ test]))
 
@@ -202,11 +193,7 @@
                     (j/execute! con [(str "UPDATE " table-name " SET balance = balance + ? WHERE id = ?") amount to])
                     (assoc op :type :ok)))))))
 
-  (teardown! [_ test]
-    (when-not (:leave-db-running? test)
-      (info "Drop table" table-name)
-      (cl/with-conn-failure-retry conn
-        (j/execute! conn [(str "DROP TABLE IF EXISTS " table-name)]))))
+  (teardown! [_ test])
 
   (close! [_ test]))
 
@@ -280,12 +267,7 @@
                     (j/execute! con [(str "UPDATE " to " SET balance = balance + ? WHERE id = 0") amount])
                     (assoc op :type :ok)))))))
 
-  (teardown! [_ test]
-    (when-not (:leave-db-running? test)
-      (cl/with-conn-failure-retry conn
-        (doseq [a (:accounts test)]
-          (info "Drop table" table-name a)
-          (j/execute! conn [(str "DROP TABLE IF EXISTS " table-name a)])))))
+  (teardown! [_ test])
 
   (close! [_ test]))
 
