@@ -35,7 +35,7 @@
     (let [conn (cl/open node test)]
       (assert conn)
       (Thread/sleep 10000) ; wait for leader election and joining to a cluster
-      (if (= node (first (db/primaries test)))
+      (if (= true (cl/is-rw? conn))
         (cl/with-conn-failure-retry conn
           (j/execute! conn [(str "CREATE TABLE IF NOT EXISTS " table-name
                             " (id INT NOT NULL PRIMARY KEY,

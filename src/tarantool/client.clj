@@ -79,7 +79,8 @@
 
 (defn is-rw?
   [conn]
-  (not (is-ro? conn)))
+  (cl/with-conn-failure-retry conn
+      (not (is-ro? conn))))
 
 (defmacro with-txn-aborts
   "Aborts body on rollbacks."
