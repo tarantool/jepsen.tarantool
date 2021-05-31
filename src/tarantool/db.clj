@@ -204,12 +204,14 @@
          (into [])
          (remove nil?))))
 
-(defn calculate-quorum
-  "Calculate quorum for a given number of nodes."
+(defn majority
+  "returns majority (n/2 + 1) for a given number of nodes."
   [test]
-  (->> (/ (count (:nodes test)) 2)
-       (double)
-       (Math/round)))
+  (-> (:nodes test)
+      count
+      (/ 2)
+      inc
+      Math/floor long))
 
 (defn configure!
   "Configure instance"
@@ -219,7 +221,7 @@
     (c/exec :mkdir :-p "/etc/tarantool/instances.enabled")
     (c/exec :usermod :-a :-G :tarantool :ubuntu)
     (c/exec :echo (-> "tarantool/jepsen.lua" io/resource slurp
-                      (str/replace #"%TARANTOOL_QUORUM%" (str (calculate-quorum test)))
+                      (str/replace #"%TARANTOOL_QUORUM%" (str (majority test)))
                       (str/replace #"%TARANTOOL_IP_ADDRESS%" node)
                       (str/replace #"%TARANTOOL_REPLICATION%" (replica-set test))
                       (str/replace #"%TARANTOOL_MVCC%" (str (:mvcc test)))
