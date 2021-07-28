@@ -41,8 +41,8 @@
     (cl/with-error-handling op
       (cl/with-txn-aborts op
         (case (:f op)
-          :add (let [con (cl/open (first (db/primaries test)) test)]
-                 (do (sql/insert! con table-name {:value v})
+          :add (if (true? (cl/is-rw? conn))
+                 (do (sql/insert! conn table-name {:value v})
                     (assoc op :type :ok)))
 
           :read (->> (sql/query conn [(str "SELECT * FROM " table-name)])

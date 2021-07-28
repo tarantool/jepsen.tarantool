@@ -248,12 +248,12 @@
       (stop! test node)
       (wipe! test node))
 
-    db/Primary
-    (setup-primary! [db test node])
+    ;db/Primary
+    ;(setup-primary! [db test node])
 
-    (primaries [db test]
-      "Return a seq of primaries in a cluster."
-      ["84.23.53.151"]) ; FIXME
+    ;(primaries [db test]
+    ;  "Return a seq of primaries in a cluster."
+    ;  ["84.23.53.151"]) ; FIXME
 
     db/Process
     (start! [_ test node]

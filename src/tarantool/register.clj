@@ -33,14 +33,14 @@
 
   (setup! [this test]
       (assert conn)
-      (Thread/sleep 10000) ; wait for leader election and joining to a cluster
-      ;(if (= (:node conn) (first (db/primaries test)))
+      (Thread/sleep 30000) ; wait for leader election and joining to a cluster
+      (if (true? (cl/is-rw? conn))
         (cl/with-conn-failure-retry conn
           (j/execute! conn [(str "CREATE TABLE IF NOT EXISTS " table-name
                             " (id INT NOT NULL PRIMARY KEY,
                             value INT NOT NULL)")])
           (let [table (clojure.string/upper-case table-name)]
-            (j/execute! conn [(str "SELECT LUA('return box.space." table ":alter{ is_sync = true } or 1')")])))
+            (j/execute! conn [(str "SELECT LUA('return box.space." table ":alter{ is_sync = true } or 1')")]))))
       (assoc this :conn conn))
 
   (invoke! [this test op]
@@ -51,13 +51,13 @@
                    v (:value r)]
                (assoc op :type :ok, :value (independent/tuple k v)))
 
-       :write (do (let [con (cl/open (first (db/primaries test)) test)
-                        table (clojure.string/upper-case table-name)]
-                    (j/execute! con
+       :write (do (let [table (clojure.string/upper-case table-name)]
+                 (if (true? (cl/is-ro? conn))
+                    (j/execute! conn
                       [(str "SELECT _UPSERT(" k ", " value ", '" table "')")])
                     (assoc op
                            :type :ok
-                           :value (independent/tuple k value))))
+                           :value (independent/tuple k value)))))
 
        :cas (do (let [[old new] value
                   con (cl/open (first (db/primaries test)) test)
