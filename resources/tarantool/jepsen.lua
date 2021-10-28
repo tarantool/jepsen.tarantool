@@ -29,6 +29,13 @@ else
 end
 
 local function bootstrap()
+    -- We don't use automatic leader election in the single instance
+    -- configuration, so we should manually mark this instance as
+    -- a leader for synchronous transactions processing.
+    if single_mode then
+        box.ctl.promote()
+    end
+
     box.schema.user.create('jepsen', {password = 'jepsen'})
     box.schema.user.grant('jepsen', 'create,read,write,execute,drop,alter,replication', 'universe')
     box.schema.user.grant('jepsen', 'read,write', 'space', '_index')
