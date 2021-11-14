@@ -17,6 +17,9 @@
                        [db :as db]]))
 
 (def table-name "accounts")
+(def err-unable-to-distribute-balances (str
+  "Unable to distribute initial balances uniformly "
+  "for given total-amount and accounts"))
 
 (defrecord BankClientWithLua [conn]
   client/Client
@@ -27,7 +30,12 @@
 
   (setup! [this test node]
     (locking BankClientWithLua
-      (let [conn (cl/open node test)]
+      (let [conn (cl/open node test)
+            ; Distribute initial balances uniformly.
+            initial-balance-per-account (/ (:total-amount test)
+                                           (count (:accounts test)))]
+            (assert (integer? initial-balance-per-account)
+                    err-unable-to-distribute-balances)
        (Thread/sleep 10000) ; wait for leader election and joining to a cluster
        (when (= node (first (db/primaries test)))
          (cl/with-conn-failure-retry conn
@@ -37,10 +45,10 @@
                              balance INT NOT NULL)")])
            (doseq [a (:accounts test)]
                (info "Populating account")
-               (sql/insert! conn table-name {:id      a
-                                             :balance (if (= a (first (:accounts test)))
-                                                       (:total-amount test)
-                                                       0)}))))
+               (sql/insert! conn table-name
+                   {:id a
+                    :balance initial-balance-per-account}))))
+
         (assoc this :conn conn :node node))))
 
   (invoke! [this test op]
@@ -79,7 +87,12 @@
 
   (setup! [this test node]
     (locking tbl-created?
-      (let [conn (cl/open node test)]
+      (let [conn (cl/open node test)
+            ; Distribute initial balances uniformly.
+            initial-balance-per-account (/ (:total-amount test)
+                                           (count (:accounts test)))]
+            (assert (integer? initial-balance-per-account)
+                    err-unable-to-distribute-balances)
         (Thread/sleep 10000) ; wait for leader election and joining to a cluster
         (when (= node (first (db/primaries test)))
           (when (compare-and-set! tbl-created? false true)
@@ -92,9 +105,10 @@
                                        "balance INT NOT NULL)")])
                   (info "Populating account" a)
                   (sql/insert! conn (str table-name a)
-                             {:id 0
-                              :account_id a
-                              :balance 10})))))
+                      {:id 0
+                       :account_id a
+                       :balance initial-balance-per-account})))))
+
         (assoc this :conn conn :node node))))
 
   (invoke! [this test op]
@@ -147,7 +161,12 @@
 
   (setup! [this test node]
     (locking BankClient
-      (let [conn (cl/open node test)]
+      (let [conn (cl/open node test)
+            ; Distribute initial balances uniformly.
+            initial-balance-per-account (/ (:total-amount test)
+                                           (count (:accounts test)))]
+            (assert (integer? initial-balance-per-account)
+                    err-unable-to-distribute-balances)
        (Thread/sleep 10000) ; wait for leader election and joining to a cluster
        (when (= node (first (db/primaries test)))
          (cl/with-conn-failure-retry conn
@@ -157,10 +176,10 @@
                              balance INT NOT NULL)")])
            (doseq [a (:accounts test)]
                (info "Populating account")
-               (sql/insert! conn table-name {:id      a
-                                             :balance (if (= a (first (:accounts test)))
-                                                       (:total-amount test)
-                                                       0)}))))
+                   (sql/insert! conn table-name
+                       {:id a
+                        :balance initial-balance-per-account}))))
+
         (assoc this :conn conn :node node))))
 
   (invoke! [this test op]
@@ -209,7 +228,12 @@
 
   (setup! [this test node]
     (locking tbl-created?
-      (let [conn (cl/open node test)]
+      (let [conn (cl/open node test)
+            ; Distribute initial balances uniformly.
+            initial-balance-per-account (/ (:total-amount test)
+                                           (count (:accounts test)))]
+            (assert (integer? initial-balance-per-account)
+                    err-unable-to-distribute-balances)
         (Thread/sleep 10000) ; wait for leader election and joining to a cluster
         (when (= node (first (db/primaries test)))
           (when (compare-and-set! tbl-created? false true)
@@ -221,10 +245,9 @@
                                        "balance INT NOT NULL)")])
                   (info "Populating account" a)
                   (sql/insert! conn (str table-name a)
-                             {:id 0
-                              :balance (if (= a (first (:accounts test)))
-                                         (:total-amount test)
-                                         0)})))))
+                      {:id 0
+                       :balance initial-balance-per-account})))))
+
         (assoc this :conn conn :node node))))
 
   (invoke! [this test op]
