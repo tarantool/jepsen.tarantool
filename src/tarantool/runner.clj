@@ -57,7 +57,6 @@
   "A collection of workload names which we expect should actually pass."
   (remove #{:bank               ; https://github.com/tarantool/jepsen.tarantool/issues/83
             :bank-multitable    ; https://github.com/tarantool/jepsen.tarantool/issues/83
-            :counter-inc        ; https://github.com/tarantool/tarantool/issues/6095
             } standard-workloads))
 
 (def nemeses
