@@ -1,5 +1,7 @@
 # Tarantool Jepsen Test
 
+[![Building](https://github.com/tarantool/jepsen.tarantool/actions/workflows/build.yaml/badge.svg)](https://github.com/tarantool/jepsen.tarantool/actions/workflows/build.yaml)
+
 This is a test suite, written using the [Jepsen distributed systems testing
 library](https://jepsen.io), for
 [Tarantool](https://github.com/tarantool/tarantool). It provides a single
