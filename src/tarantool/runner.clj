@@ -23,7 +23,8 @@
                        [nemesis :as nemesis]
                        [register :as register]
                        [sets :as sets]
-                       [counter :as counter]]))
+                       [counter :as counter]])
+   (:gen-class))
 
 (def minimal-concurrency
   10)

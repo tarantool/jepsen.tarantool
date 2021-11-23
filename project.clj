@@ -13,4 +13,5 @@
   :plugins [[lein-cljfmt "0.6.8"]]
   :repl-options {:init-ns tarantool.runner}
   :jvm-opts ["-Djava.awt.headless=true -Xmx12G"]
-  )
+  :aot [tarantool.runner]
+)

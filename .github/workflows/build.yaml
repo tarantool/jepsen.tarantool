@@ -36,3 +36,5 @@ jobs:
     - run: lein check
 
     - run: lein compile
+
+    - run: lein uberjar
