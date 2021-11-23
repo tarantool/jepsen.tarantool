@@ -1,0 +1,45 @@
+name: Publishing
+
+on:
+  push:
+    tags: ['*']
+
+jobs:
+  publish-jar-tag:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Setup Java
+      uses: actions/setup-java@v2
+      with:
+        java-version: '12'
+        distribution: 'zulu'
+
+    - name: Setup Clojure tools
+      uses: DeLaGuardo/setup-clojure@3.5
+      with:
+        cli: 1.10.1.693 # Clojure CLI based on tools.deps
+        lein: 2.9.1     # or use 'latest' to always provision latest version of leiningen
+        boot: 2.8.3     # or use 'latest' to always provision latest version of boot
+
+    - run: lein uberjar
+
+    - run: sudo apt install zip
+
+    - name: Create files to release
+      run: |
+        lein uberjar
+        zip jepsen.tarantool-${{ env.TAG }}.zip
+            target/jepsen.tarantool-${{ env.TAG }}-standalone.jar
+            README.md
+            CHANGELOG.md
+
+    - name: Upload files to release
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: ./jepsen.tarantool-${{ env.TAG }}.zip
+        asset_name: jepsen.tarantool-${{ env.TAG }}.zip
+        tag: ${{ github.ref }}
