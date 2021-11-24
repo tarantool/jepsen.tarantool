@@ -4,8 +4,9 @@
 
 This is a test suite, written using the [Jepsen distributed systems testing
 library](https://jepsen.io), for
-[Tarantool](https://github.com/tarantool/tarantool). It provides a single
-workload, which uses [Elle](https://github.com/jepsen-io/elle) to find
+[Tarantool](https://github.com/tarantool/tarantool). It provides a number of
+workloads, which uses [Elle](https://github.com/jepsen-io/elle) and
+[Knossos](https://github.com/jepsen-io/knossos) to find
 transactional anomalies up to strict serializability.
 
 We include a wide variety of faults, including network partitions, process
