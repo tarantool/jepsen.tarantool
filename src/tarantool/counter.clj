@@ -58,7 +58,6 @@
   (close! [_ test]))
 
 (def add {:type :invoke :f :add :value 1})
-(def sub {:type :invoke :f :add :value -1})
 (def r   {:type :invoke :f :read})
 
 (defn with-op-index
