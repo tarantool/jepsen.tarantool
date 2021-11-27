@@ -1,5 +1,5 @@
 (ns tarantool.register
-  "Run Tarantool tests."
+  "Run register tests."
   (:require [clojure.tools.logging :refer [info warn]]
             [clojure.string :as str]
             [jepsen [cli :as cli]
