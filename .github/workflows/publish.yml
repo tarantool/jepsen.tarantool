@@ -33,6 +33,7 @@ jobs:
         lein uberjar
         zip jepsen.tarantool-${{ env.TAG }}.zip
             target/jepsen.tarantool-${{ env.TAG }}-standalone.jar
+            run-jepsen
             README.md
             CHANGELOG.md
 
