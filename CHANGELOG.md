@@ -61,3 +61,4 @@ change log follows the conventions of
 - Add primary node discovery (#43, #17).
 - Add bank workload (#67).
 - Enable uberjar support and build JAR file in CI.
+- Add shell script for running Jepsen tests.

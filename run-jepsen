@@ -1,0 +1,26 @@
+#!/bin/sh
+
+set -eu
+
+release_version="0.1.0"
+
+test_options=$@
+if test -z "$test_options"; then
+    echo "Usage: $(basename "$0") test --help"
+    exit 0
+fi
+
+jar_path="./target/jepsen.tarantool-${release_version}-standalone.jar"
+if [ ! -f "$jar_path" ]; then
+    echo "JAR file ($jar_path) is not found!"
+    exit 1
+fi
+
+java_path=$(readlink -f $(which java))
+if test -z "$java_path"; then
+    echo "No Java binary found."
+    exit 1
+fi
+
+cmd_line="$java_path -jar $jar_path $test_options"
+eval $cmd_line
