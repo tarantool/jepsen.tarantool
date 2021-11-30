@@ -4,7 +4,21 @@ All notable changes to this project will be documented in this file. This
 change log follows the conventions of
 [keepachangelog.com](https://keepachangelog.com/).
 
-## Unreleased
+## [Unreleased]
+
+[Unreleased]: https://github.com/tarantool/jepsen.tarantool/compare/0.1.0...HEAD
+
+### Added
+
+### Changed
+
+### Fixed
+
+### Removed
+
+## [0.1.0] - 2021-12-07
+
+[0.1.0]: https://github.com/tarantool/jepsen.tarantool/compare/1b76c83c...0.1.0
 
 ### Removed
 
