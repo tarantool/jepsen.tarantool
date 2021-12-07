@@ -6,6 +6,7 @@ on:
 
 jobs:
   publish-jar-tag:
+    if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
@@ -30,17 +31,18 @@ jobs:
 
     - name: Create files to release
       run: |
-        lein uberjar
-        zip jepsen.tarantool-${{ env.TAG }}.zip
-            target/jepsen.tarantool-${{ env.TAG }}-standalone.jar
-            run-jepsen
-            README.md
+        zip jepsen.tarantool-bin-${{ env.TAG }}.zip \
+            target/jepsen.tarantool-${{ env.TAG }}-standalone.jar \
+            run-jepsen \
+            README.md \
             CHANGELOG.md
 
     - name: Upload files to release
       uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: ./jepsen.tarantool-${{ env.TAG }}.zip
-        asset_name: jepsen.tarantool-${{ env.TAG }}.zip
+        file: jepsen.tarantool-bin-${{ env.TAG }}.zip
+        asset_name: jepsen.tarantool-bin-${{ env.TAG }}.zip
         tag: ${{ github.ref }}
+        overwrite: true
+        prerelease: true
