@@ -37,7 +37,8 @@ local function bootstrap()
     end
 
     box.schema.user.create('jepsen', {password = 'jepsen'})
-    box.schema.user.grant('jepsen', 'create,read,write,execute,drop,alter,replication', 'universe')
+    box.schema.user.grant('jepsen', 'create,read,write,execute,drop,alter', 'universe')
+    box.schema.user.grant('jepsen', 'replication')
     box.schema.user.grant('jepsen', 'read,write', 'space', '_index')
     box.schema.user.grant('jepsen', 'write', 'space', '_schema')
     box.schema.user.grant('jepsen', 'write', 'space', '_space')
