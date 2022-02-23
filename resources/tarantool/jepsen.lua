@@ -37,11 +37,7 @@ local function bootstrap()
     end
 
     box.schema.user.create('jepsen', {password = 'jepsen'})
-    box.schema.user.grant('jepsen', 'create,read,write,execute,drop,alter', 'universe')
-    box.schema.user.grant('jepsen', 'replication')
-    box.schema.user.grant('jepsen', 'read,write', 'space', '_index')
-    box.schema.user.grant('jepsen', 'write', 'space', '_schema')
-    box.schema.user.grant('jepsen', 'write', 'space', '_space')
+    box.schema.user.grant('jepsen', 'super')
 
 --[[ Function implements a CAS (Compare And Set) operation, which takes a key,
 old value, and new value and sets the key to the new value if and only if the
