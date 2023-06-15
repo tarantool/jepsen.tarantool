@@ -46,7 +46,7 @@
                  (do (sql/insert! con table-name {:value v})
                     (assoc op :type :ok)))
 
-          :read (->> (sql/query conn [(str "SELECT * FROM " table-name)])
+          :read (->> (sql/query conn [(str "SELECT * FROM SEQSCAN " table-name)])
                      (mapv :VALUE)
                      (assoc op :type :ok, :value)))))))
 
